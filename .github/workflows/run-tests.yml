@@ -105,7 +105,7 @@ jobs:
       - name: Build & Run Tests with Coverage
         run: |
           cd food-seer-backend
-          mvn -B clean test
+          mvn -B -Daether.connector.http.retryHandler.count=5 -Daether.connector.http.retryHandler.serviceUnavailable=429,502,503,504 clean test
 
       - name: Check for JaCoCo report
         working-directory: food-seer-backend

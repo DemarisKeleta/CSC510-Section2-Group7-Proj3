@@ -31,7 +31,9 @@ jobs:
 
       - name: Run the M0 trace-back eval
         working-directory: food-seer-backend
-        run: mvn -B -Dtest=M0TraceEval -Dsurefire.failIfNoSpecifiedTests=false test
+        # Retry dependency downloads that Maven Central answers with 429/502/503/504.
+        # Only downloads are retried; a failing eval still fails the job once.
+        run: mvn -B -Daether.connector.http.retryHandler.count=5 -Daether.connector.http.retryHandler.serviceUnavailable=429,502,503,504 -Dtest=M0TraceEval -Dsurefire.failIfNoSpecifiedTests=false test
 
       - name: Publish the M0 report to the job summary
         if: always()
