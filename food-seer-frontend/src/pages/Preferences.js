@@ -25,15 +25,15 @@ function Preferences() {
           // Parse existing preferences
           const existingBudget = user.costPreference || '';
           const existingDietary = user.dietaryRestrictions || '';
-          
+
           // Parse dietary restrictions - KEEP ORIGINAL CASE (should be UPPERCASE)
           const dietaryArray = existingDietary ? existingDietary.split(',').map(d => d.trim().toUpperCase()) : [];
-          
+
           console.log('✅ Parsed preferences:', {
             budget: existingBudget,
             dietaryRestrictions: dietaryArray
           });
-          
+
           setQuizData({
             budget: existingBudget,
             dietaryRestrictions: dietaryArray

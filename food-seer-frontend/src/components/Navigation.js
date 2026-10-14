@@ -117,6 +117,16 @@ const Navigation = () => {
                 >
                   📦 My Orders
                 </button>
+
+                <button
+                  className={`nav-link ${location.pathname === '/personal-diet' ? 'active' : ''}`}
+                  onClick={() => {
+                    navigate('/personal-diet');
+                    setMenuOpen(false);
+                  }}
+                >
+                  🔥 Personal Diet
+                </button>
               </>
             )}
 

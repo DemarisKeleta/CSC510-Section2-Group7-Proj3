@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const DietaryRestrictions = ({ restrictions, onUpdate, onNext, onPrevious, canGoNext }) => {
+const DietaryRestrictions = ({ restrictions, onUpdate, onNext, onPrevious, canGoNext, isLastStep }) => {
   const [selectedRestrictions, setSelectedRestrictions] = useState(restrictions);
 
   // Sync state with prop when it changes (e.g., when user returns to update preferences)
@@ -100,13 +100,13 @@ const DietaryRestrictions = ({ restrictions, onUpdate, onNext, onPrevious, canGo
           <span className="previous-icon">←</span>
           Previous
         </button>
-        <button 
-          className="next-button" 
+        <button
+          className="next-button"
           onClick={handleNext}
           disabled={!canGoNext}
         >
-          Finish
-          <span className="next-icon">✓</span>
+          {isLastStep ? 'Finish' : 'Next'}
+          <span className="next-icon">{isLastStep ? '✓' : '→'}</span>
         </button>
       </div>
     </div>

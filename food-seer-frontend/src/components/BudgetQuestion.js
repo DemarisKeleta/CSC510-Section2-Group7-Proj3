@@ -1,7 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const BudgetQuestion = ({ budget, onUpdate, onNext, onPrevious, canGoNext }) => {
   const [selectedBudget, setSelectedBudget] = useState(budget);
+
+  // Sync with the prop once the parent's async preferences fetch resolves
+  // (on mount, budget is '' until that fetch completes).
+  useEffect(() => {
+    setSelectedBudget(budget);
+  }, [budget]);
 
   const budgetOptions = [
     { value: 'budget', label: 'Budget ($0-$10)', description: 'Most affordable options' },

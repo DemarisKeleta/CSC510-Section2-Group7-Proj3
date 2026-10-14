@@ -14,10 +14,10 @@ const Recommendations = () => {
       try {
         const userData = await getCurrentUser();
         setUser(userData);
-        
+
         const foodsData = await getAllFoods();
         setFoods(foodsData);
-        
+
         // Filter foods based on user preferences
         filterFoodsByPreferences(foodsData, userData);
       } catch (error) {

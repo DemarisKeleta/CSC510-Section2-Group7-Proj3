@@ -12,6 +12,7 @@ import InventoryManagement from './pages/InventoryManagement';
 import UserManagement from './pages/UserManagement';
 import Chatbot from './pages/Chatbot';
 import Quiz from './pages/Quiz';
+import PersonalDiet from './pages/PersonalDiet';
 import AdminRoute from './components/AdminRoute';
 import Dashboard from './pages/Dashboard';
 import Navigation from './components/Navigation';
@@ -73,15 +74,25 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/recommendations" 
+          <Route
+            path="/recommendations"
             element={
               <ProtectedRoute>
                 <AppLayout>
                   <Recommendations />
                 </AppLayout>
               </ProtectedRoute>
-            } 
+            }
+          />
+          <Route
+            path="/personal-diet"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <PersonalDiet />
+                </AppLayout>
+              </ProtectedRoute>
+            }
           />
           <Route
             path="/inventory-dashboard"

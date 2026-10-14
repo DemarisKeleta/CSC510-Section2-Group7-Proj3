@@ -91,21 +91,59 @@ export const getCurrentUser = async () => {
   }
 };
 
-export const updateUserPreferences = async (costPreference, dietaryRestrictions) => {
+export const updateUserPreferences = async (costPreference, dietaryRestrictions, dailyCalorieGoal = null) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/users/me/preferences`, {
       method: 'PUT',
       headers: createHeaders(true),
-      body: JSON.stringify({ costPreference, dietaryRestrictions }),
+      body: JSON.stringify({ costPreference, dietaryRestrictions, dailyCalorieGoal }),
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to update preferences');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Update preferences error:', error);
+    throw error;
+  }
+};
+
+export const getCalorieBudget = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/users/me/calorieBudget`, {
+      method: 'GET',
+      headers: createHeaders(true),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch calorie budget');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get calorie budget error:', error);
+    throw error;
+  }
+};
+
+export const logMeal = async (mealType, calories) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/users/me/mealLog`, {
+      method: 'POST',
+      headers: createHeaders(true),
+      body: JSON.stringify({ mealType, calories }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Failed to log meal');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Log meal error:', error);
     throw error;
   }
 };
@@ -130,6 +168,24 @@ export const getAllFoods = async () => {
     return await response.json();
   } catch (error) {
     console.error('Get all foods error:', error);
+    throw error;
+  }
+};
+
+export const getFoodsWithinCalorieBudget = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/foods/withinCalorieBudget`, {
+      method: 'GET',
+      headers: createHeaders(true),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch calorie-budget-aware foods');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get foods within calorie budget error:', error);
     throw error;
   }
 };
