@@ -15,8 +15,7 @@ import org.junit.jupiter.api.Test;
  */
 public class AllergenMatcherTest {
 
-    // --- normalizeTerm -------------------------------------------------
-
+    // normalizeTerm
     @Test
     public void testNormalizeNullAndBlank() {
         assertEquals("", AllergenMatcher.normalizeTerm(null));
@@ -69,8 +68,7 @@ public class AllergenMatcherTest {
         assertEquals("", AllergenMatcher.normalizeTerm("allergic to"));
     }
 
-    // --- parseTerms ----------------------------------------------------
-
+    // parseTerms
     @Test
     public void testParseNullBlankAndEmpty() {
         assertEquals(Collections.emptyList(), AllergenMatcher.parseTerms(null));
@@ -109,8 +107,7 @@ public class AllergenMatcherTest {
         assertEquals(Arrays.asList("ORANGE", "CANDY"), AllergenMatcher.parseTerms("orange, candy"));
     }
 
-    // --- restrictionsAffectedBy: plural, case, spacing -------------------
-
+    // restrictionsAffectedBy: plural, case, spacing
     @Test
     public void testPeanutMatchesPeanutsBothDirections() {
         assertTrue(AllergenMatcher.restrictionsAffectedBy("PEANUTS", "peanut"));
@@ -130,8 +127,7 @@ public class AllergenMatcherTest {
         assertFalse(AllergenMatcher.restrictionsAffectedBy("SOY", "sesame"));
     }
 
-    // --- restrictionsAffectedBy: empty inputs ---------------------------
-
+    // restrictionsAffectedBy: empty inputs
     @Test
     public void testNullOrBlankRestrictionsNeverMatch() {
         assertFalse(AllergenMatcher.restrictionsAffectedBy(null, "peanut"));
@@ -146,8 +142,7 @@ public class AllergenMatcherTest {
         assertFalse(AllergenMatcher.restrictionsAffectedBy("PEANUTS", "free"));
     }
 
-    // --- restrictionsAffectedBy: nuts versus tree nuts versus peanuts ----
-
+    // restrictionsAffectedBy: nuts versus tree nuts versus peanuts
     @Test
     public void testGenericNutsIncidentAffectsPeanutAndTreeNutCustomers() {
         assertTrue(AllergenMatcher.restrictionsAffectedBy("PEANUTS", "nuts"));
@@ -176,8 +171,7 @@ public class AllergenMatcherTest {
         assertFalse(AllergenMatcher.restrictionsAffectedBy("ALMOND", "walnut"));
     }
 
-    // --- restrictionsAffectedBy: fish versus shellfish ------------------
-
+    // restrictionsAffectedBy: fish versus shellfish
     @Test
     public void testFishAndShellfishAreNotConfusedBySubstring() {
         assertFalse(AllergenMatcher.restrictionsAffectedBy("FISH", "shellfish"));
@@ -201,8 +195,7 @@ public class AllergenMatcherTest {
         assertFalse(AllergenMatcher.restrictionsAffectedBy("tuna", "salmon"));
     }
 
-    // --- restrictionsAffectedBy: gluten, wheat, dairy, aliases -----------
-
+    // restrictionsAffectedBy: gluten, wheat, dairy, aliases
     @Test
     public void testGlutenAndWheat() {
         assertTrue(AllergenMatcher.restrictionsAffectedBy("GLUTEN", "wheat"));
@@ -245,8 +238,7 @@ public class AllergenMatcherTest {
         assertFalse(AllergenMatcher.restrictionsAffectedBy("vegan", "peanut"));
     }
 
-    // --- foodDeclaresAllergen --------------------------------------------
-
+    // foodDeclaresAllergen
     @Test
     public void testFoodTagsMatchUsingTheSameRules() {
         assertTrue(AllergenMatcher.foodDeclaresAllergen(Arrays.asList("GLUTEN", "PEANUTS"), "peanut"));

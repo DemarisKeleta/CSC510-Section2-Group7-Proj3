@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.access.AccessDeniedException;
 
 import FoodSeer.constant.IncidentSource;
+import FoodSeer.dto.IncidentDto;
 import FoodSeer.entity.Food;
 import FoodSeer.entity.Incident;
 import FoodSeer.entity.Notification;
@@ -70,8 +71,7 @@ public class TraceServiceImplTest {
                 notificationRepository, 2);
     }
 
-    // --- Helpers -----------------------------------------------------------
-
+    // Helpers
     private Food food(final long id, final String name, final String... allergyTags) {
         final Food food = new Food(name, 10, 5, new ArrayList<>(Arrays.asList(allergyTags)));
         food.setId(id);
@@ -102,8 +102,7 @@ public class TraceServiceImplTest {
                 NOON.plusHours(1));
     }
 
-    // --- Restaurant report: who gets notified --------------------------------
-
+    // Restaurant report: who gets notified
     @Test
     public void testRestaurantReportNotifiesAllergicCustomerInWindow() {
         final Food cookie = food(10, "COOKIES", "PEANUTS");
@@ -294,8 +293,7 @@ public class TraceServiceImplTest {
         assertTrue(result.getExposedOrderIds().isEmpty());
     }
 
-    // --- Restaurant report: the time window ------------------------------------
-
+    // Restaurant report: the time window
     @Test
     public void testWindowBoundariesAreInclusive() {
         final Food cookie = food(10, "COOKIES", "PEANUTS");
@@ -346,8 +344,7 @@ public class TraceServiceImplTest {
         assertEquals(Arrays.asList(1L), result.getExposedOrderIds());
     }
 
-    // --- Restaurant report: bad input ------------------------------------------
-
+    // Restaurant report: bad input
     @Test
     public void testRestaurantReportRejectsBlankReporter() {
         assertThrows(IllegalArgumentException.class, () -> service.reportRestaurantIncident(null, "peanut",
@@ -410,8 +407,7 @@ public class TraceServiceImplTest {
         assertEquals(new LinkedHashSet<>(Arrays.asList(10L)), result.getIncident().getSuspectFoodIds());
     }
 
-    // --- Customer report -------------------------------------------------------
-
+    // Customer report
     private Order reporterOrder(final User reporter, final Food... foods) {
         final Order order = order(1, reporter, NOON, foods);
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
@@ -588,8 +584,7 @@ public class TraceServiceImplTest {
         verify(incidentRepository, never()).save(any());
     }
 
-    // --- TraceResult -------------------------------------------------------------
-
+    // TraceResult
     @Test
     public void testResultListsAreCopiesThatCannotBeChanged() {
         final List<Long> ids = new ArrayList<>(Arrays.asList(1L));
@@ -600,5 +595,169 @@ public class TraceServiceImplTest {
         assertEquals(Arrays.asList(1L), result.getExposedOrderIds());
         assertThrows(UnsupportedOperationException.class, () -> result.getExposedOrderIds().add(3L));
         assertThrows(UnsupportedOperationException.class, () -> result.getNotifications().add(new Notification()));
+    }
+
+    // Counts stored on the incident
+    @Test
+    public void testIncidentRecordsExposedAndNotifiedCounts() {
+        final Food cookie = food(10, "COOKIES", "PEANUTS");
+        final Order aliceOrder = order(1, user("alice", "PEANUTS"), NOON, cookie);
+        final Order bobOrder = order(2, user("bob", "MILK"), NOON, cookie);
+        stubFood(cookie, aliceOrder, bobOrder);
+
+        final TraceResult result = restaurantReport("peanut", 10L);
+
+        assertEquals(Integer.valueOf(2), result.getIncident().getExposedOrderCount());
+        assertEquals(Integer.valueOf(1), result.getIncident().getNotifiedCount());
+    }
+
+    @Test
+    public void testIncidentWithNoExposureRecordsZeroCounts() {
+        final Food cookie = food(10, "COOKIES", "PEANUTS");
+        stubFood(cookie);
+
+        final TraceResult result = restaurantReport("peanut", 10L);
+
+        assertEquals(Integer.valueOf(0), result.getIncident().getExposedOrderCount());
+        assertEquals(Integer.valueOf(0), result.getIncident().getNotifiedCount());
+    }
+
+    // listIncidents and describe
+    private Incident storedIncident(final long id) {
+        final Incident incident = new Incident();
+        incident.setId(id);
+        incident.setSource(IncidentSource.CUSTOMER);
+        incident.setAllergen("PEANUT");
+        incident.setReporterUsername("alice");
+        incident.setSourceOrderId(5L);
+        incident.setSuspectFoodIds(new LinkedHashSet<>(Arrays.asList(10L, 11L)));
+        incident.setWindowStart(NOON.minusHours(2));
+        incident.setWindowEnd(NOON.plusHours(2));
+        incident.setReportedAt(NOON);
+        incident.setExposedOrderCount(4);
+        incident.setNotifiedCount(2);
+        return incident;
+    }
+
+    @Test
+    public void testDescribeCopiesFieldsAndNamesFoods() {
+        final Food cookie = food(10, "COOKIES", "PEANUTS");
+        when(foodRepository.findById(10L)).thenReturn(Optional.of(cookie));
+        when(foodRepository.findById(11L)).thenReturn(Optional.empty());
+
+        final IncidentDto dto = service.describe(storedIncident(3L));
+
+        assertEquals(3L, dto.id());
+        assertEquals("CUSTOMER", dto.source());
+        assertEquals("PEANUT", dto.allergen());
+        assertEquals(5L, dto.sourceOrderId());
+        assertEquals(Arrays.asList(10L, 11L), dto.suspectFoodIds());
+        assertEquals(Arrays.asList("COOKIES", "Food #11 (removed)"), dto.suspectFoodNames());
+        assertEquals(NOON.minusHours(2), dto.windowStart());
+        assertEquals(NOON.plusHours(2), dto.windowEnd());
+        assertEquals(NOON, dto.reportedAt());
+        assertEquals(Integer.valueOf(4), dto.exposedOrderCount());
+        assertEquals(Integer.valueOf(2), dto.notifiedCount());
+        assertNull(dto.restaurantAcknowledgedAt());
+        assertNull(dto.remedy());
+    }
+
+    @Test
+    public void testDescribeHandlesMissingSourceAndFoods() {
+        final Incident bare = new Incident();
+        bare.setId(9L);
+        bare.setSource(null);
+        bare.setSuspectFoodIds(null);
+
+        final IncidentDto dto = service.describe(bare);
+
+        assertNull(dto.source());
+        assertTrue(dto.suspectFoodIds().isEmpty());
+        assertTrue(dto.suspectFoodNames().isEmpty());
+    }
+
+    @Test
+    public void testListIncidentsKeepsRepositoryOrder() {
+        when(incidentRepository.findAllByOrderByReportedAtDesc())
+                .thenReturn(Arrays.asList(storedIncident(2L), storedIncident(1L)));
+
+        final List<IncidentDto> list = service.listIncidents();
+
+        assertEquals(2, list.size());
+        assertEquals(2L, list.get(0).id());
+        assertEquals(1L, list.get(1).id());
+    }
+
+    @Test
+    public void testListIncidentsWhenThereAreNone() {
+        when(incidentRepository.findAllByOrderByReportedAtDesc()).thenReturn(new ArrayList<Incident>());
+
+        assertTrue(service.listIncidents().isEmpty());
+    }
+
+    // acknowledgeIncident
+    @Test
+    public void testFirstAcknowledgementSetsTimeStaffAndRemedy() {
+        final Incident incident = storedIncident(3L);
+        when(incidentRepository.findById(3L)).thenReturn(Optional.of(incident));
+
+        final IncidentDto dto = service.acknowledgeIncident(3L, "staff1", "  Full refund or a free remake  ");
+
+        assertNotNull(dto.restaurantAcknowledgedAt());
+        assertEquals("staff1", dto.acknowledgedBy());
+        assertEquals("Full refund or a free remake", dto.remedy());
+        verify(incidentRepository).save(incident);
+    }
+
+    @Test
+    public void testSecondAcknowledgementKeepsFirstTimeButUpdatesRemedy() {
+        final Incident incident = storedIncident(3L);
+        final LocalDateTime firstTime = NOON.plusMinutes(10);
+        incident.setRestaurantAcknowledgedAt(firstTime);
+        incident.setAcknowledgedBy("staff1");
+        incident.setRemedy("Refund");
+        when(incidentRepository.findById(3L)).thenReturn(Optional.of(incident));
+
+        final IncidentDto dto = service.acknowledgeIncident(3L, "staff2", "Refund and a free dessert");
+
+        assertEquals(firstTime, dto.restaurantAcknowledgedAt());
+        assertEquals("staff1", dto.acknowledgedBy());
+        assertEquals("Refund and a free dessert", dto.remedy());
+    }
+
+    @Test
+    public void testAcknowledgeRejectsBadInput() {
+        assertThrows(IllegalArgumentException.class, () -> service.acknowledgeIncident(3L, null, "Refund"));
+        assertThrows(IllegalArgumentException.class, () -> service.acknowledgeIncident(3L, " ", "Refund"));
+        assertThrows(IllegalArgumentException.class, () -> service.acknowledgeIncident(null, "staff1", "Refund"));
+        assertThrows(IllegalArgumentException.class, () -> service.acknowledgeIncident(3L, "staff1", null));
+        assertThrows(IllegalArgumentException.class, () -> service.acknowledgeIncident(3L, "staff1", "   "));
+        verify(incidentRepository, never()).save(any());
+    }
+
+    @Test
+    public void testAcknowledgeRemedyLengthLimit() {
+        final Incident incident = storedIncident(3L);
+        when(incidentRepository.findById(3L)).thenReturn(Optional.of(incident));
+        final StringBuilder exactly500 = new StringBuilder();
+        for (int i = 0; i < 500; i++) {
+            exactly500.append('r');
+        }
+
+        final IncidentDto dto = service.acknowledgeIncident(3L, "staff1", exactly500.toString());
+        assertEquals(500, dto.remedy().length());
+
+        final String tooLong = exactly500.toString() + "r";
+        assertThrows(IllegalArgumentException.class, () -> service.acknowledgeIncident(3L, "staff1", tooLong));
+    }
+
+    @Test
+    public void testAcknowledgeUnknownIncident() {
+        when(incidentRepository.findById(99L)).thenReturn(Optional.empty());
+
+        final ResourceNotFoundException ex = assertThrows(ResourceNotFoundException.class,
+                () -> service.acknowledgeIncident(99L, "staff1", "Refund"));
+
+        assertEquals("Incident does not exist with id 99", ex.getMessage());
     }
 }

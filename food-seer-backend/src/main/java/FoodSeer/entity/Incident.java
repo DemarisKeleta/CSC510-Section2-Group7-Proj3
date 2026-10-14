@@ -69,6 +69,26 @@ public class Incident {
     @Column(nullable = false)
     private LocalDateTime reportedAt;
 
+    /** How many orders inside the window held a suspect food. */
+    private Integer exposedOrderCount;
+
+    /** How many customers were sent a private notice. */
+    private Integer notifiedCount;
+
+    /** When restaurant staff acknowledged the incident, or null if not yet. */
+    private LocalDateTime restaurantAcknowledgedAt;
+
+    /** Username of the staff member who acknowledged it. */
+    private String acknowledgedBy;
+
+    /**
+     * What the restaurant offers affected customers, such as a refund or a
+     * remake. Shown on every customer notice for this incident, so the notice
+     * reads as the restaurant's own recall.
+     */
+    @Column(length = 500)
+    private String remedy;
+
     /**
      * Constructor for Hibernate.
      */
@@ -146,5 +166,45 @@ public class Incident {
 
     public void setReportedAt(final LocalDateTime reportedAt) {
         this.reportedAt = reportedAt;
+    }
+
+    public Integer getExposedOrderCount() {
+        return exposedOrderCount;
+    }
+
+    public void setExposedOrderCount(final Integer exposedOrderCount) {
+        this.exposedOrderCount = exposedOrderCount;
+    }
+
+    public Integer getNotifiedCount() {
+        return notifiedCount;
+    }
+
+    public void setNotifiedCount(final Integer notifiedCount) {
+        this.notifiedCount = notifiedCount;
+    }
+
+    public LocalDateTime getRestaurantAcknowledgedAt() {
+        return restaurantAcknowledgedAt;
+    }
+
+    public void setRestaurantAcknowledgedAt(final LocalDateTime restaurantAcknowledgedAt) {
+        this.restaurantAcknowledgedAt = restaurantAcknowledgedAt;
+    }
+
+    public String getAcknowledgedBy() {
+        return acknowledgedBy;
+    }
+
+    public void setAcknowledgedBy(final String acknowledgedBy) {
+        this.acknowledgedBy = acknowledgedBy;
+    }
+
+    public String getRemedy() {
+        return remedy;
+    }
+
+    public void setRemedy(final String remedy) {
+        this.remedy = remedy;
     }
 }

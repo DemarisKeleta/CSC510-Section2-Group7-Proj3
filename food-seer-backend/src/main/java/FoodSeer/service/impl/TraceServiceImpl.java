@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import FoodSeer.constant.IncidentSource;
+import FoodSeer.dto.IncidentDto;
 import FoodSeer.entity.Food;
 import FoodSeer.entity.Incident;
 import FoodSeer.entity.Notification;
@@ -47,6 +49,9 @@ public class TraceServiceImpl implements TraceService {
     private final IncidentRepository incidentRepository;
     private final NotificationRepository notificationRepository;
     private final long windowHours;
+
+    /** Longest remedy text staff can attach, matching the database column. */
+    static final int MAX_REMEDY_LENGTH = 500;
 
     /**
      * Creates the service.
@@ -214,6 +219,12 @@ public class TraceServiceImpl implements TraceService {
         if (!notifications.isEmpty()) {
             notificationRepository.saveAll(notifications);
         }
+
+        // The incident is managed by the open transaction, so these counts are
+        // written when it commits.
+        savedIncident.setExposedOrderCount(exposedOrderIds.size());
+        savedIncident.setNotifiedCount(notifications.size());
+
         return new TraceResult(savedIncident, exposedOrderIds, notifications);
     }
 
@@ -289,6 +300,72 @@ public class TraceServiceImpl implements TraceService {
             byId.put(foodId, food);
         }
         return new ArrayList<>(byId.values());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<IncidentDto> listIncidents() {
+        final List<IncidentDto> summaries = new ArrayList<>();
+        for (final Incident incident : incidentRepository.findAllByOrderByReportedAtDesc()) {
+            summaries.add(describe(incident));
+        }
+        return summaries;
+    }
+
+    @Override
+    @Transactional
+    public IncidentDto acknowledgeIncident(final Long incidentId, final String staffUsername, final String remedy) {
+        requireReporter(staffUsername);
+        if (incidentId == null) {
+            throw new IllegalArgumentException("An incident id is required.");
+        }
+        if (remedy == null || remedy.trim().isEmpty()) {
+            throw new IllegalArgumentException("Please describe what the restaurant offers affected customers.");
+        }
+        final String trimmedRemedy = remedy.trim();
+        if (trimmedRemedy.length() > MAX_REMEDY_LENGTH) {
+            throw new IllegalArgumentException(
+                    "The remedy must be " + MAX_REMEDY_LENGTH + " characters or fewer.");
+        }
+
+        final Incident incident = incidentRepository.findById(incidentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Incident does not exist with id " + incidentId));
+
+        if (incident.getRestaurantAcknowledgedAt() == null) {
+            incident.setRestaurantAcknowledgedAt(LocalDateTime.now());
+            incident.setAcknowledgedBy(staffUsername);
+        }
+        incident.setRemedy(trimmedRemedy);
+
+        final Incident saved = incidentRepository.save(incident);
+        return describe(saved);
+    }
+
+    @Override
+    public IncidentDto describe(final Incident incident) {
+        final List<Long> foodIds = new ArrayList<>();
+        final List<String> foodNames = new ArrayList<>();
+        if (incident.getSuspectFoodIds() != null) {
+            for (final Long foodId : incident.getSuspectFoodIds()) {
+                foodIds.add(foodId);
+                final Optional<Food> food = foodRepository.findById(foodId);
+                if (food.isPresent()) {
+                    foodNames.add(food.get().getFoodName());
+                } else {
+                    foodNames.add("Food #" + foodId + " (removed)");
+                }
+            }
+        }
+        final String source;
+        if (incident.getSource() == null) {
+            source = null;
+        } else {
+            source = incident.getSource().name();
+        }
+        return new IncidentDto(incident.getId(), source, incident.getAllergen(), incident.getSourceOrderId(), foodIds,
+                foodNames, incident.getWindowStart(), incident.getWindowEnd(), incident.getReportedAt(),
+                incident.getExposedOrderCount(), incident.getNotifiedCount(), incident.getRestaurantAcknowledgedAt(),
+                incident.getAcknowledgedBy(), incident.getRemedy());
     }
 
     private void requireReporter(final String reporterUsername) {

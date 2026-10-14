@@ -3,6 +3,9 @@ package FoodSeer.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import FoodSeer.dto.IncidentDto;
+import FoodSeer.entity.Incident;
+
 /**
  * Traces an allergy incident back to the customers it may have exposed and
  * warns the ones whose saved restrictions include the allergen.
@@ -55,4 +58,39 @@ public interface TraceService {
      *             if the order belongs to someone else
      */
     TraceResult reportCustomerReaction(String reporterUsername, Long orderId, String allergen);
+
+    /**
+     * Lists every incident for restaurant staff, newest first.
+     *
+     * @return incident summaries with counts only, never customer names
+     */
+    List<IncidentDto> listIncidents();
+
+    /**
+     * Records that restaurant staff have seen an incident and what they offer
+     * affected customers. The first acknowledgement time is kept; calling again
+     * only updates the remedy.
+     *
+     * @param incidentId
+     *            the incident
+     * @param staffUsername
+     *            the staff member acknowledging it
+     * @param remedy
+     *            what the restaurant offers, 1 to 500 characters
+     * @return the updated incident summary
+     * @throws IllegalArgumentException
+     *             if the staff username or remedy is blank, or the remedy is too long
+     * @throws FoodSeer.exception.ResourceNotFoundException
+     *             if the incident does not exist
+     */
+    IncidentDto acknowledgeIncident(Long incidentId, String staffUsername, String remedy);
+
+    /**
+     * Turns an incident into the summary staff see.
+     *
+     * @param incident
+     *            the incident
+     * @return its summary
+     */
+    IncidentDto describe(Incident incident);
 }
