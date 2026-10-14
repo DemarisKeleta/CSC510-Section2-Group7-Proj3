@@ -2700,3 +2700,148 @@ code {
 
 
 
+
+/* Allergy trace-back */
+
+.trace-banner {
+  background: #fff4e5;
+  color: #8a4b00;
+  border-top: 1px solid #f0c27b;
+  padding: 10px 16px;
+  text-align: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.trace-banner:hover {
+  background: #ffe9cc;
+}
+
+.trace-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.trace-card.trace-unread {
+  border-left: 5px solid #f59e0b;
+}
+
+.trace-form h2,
+.trace-section-title {
+  margin: 0 0 8px 0;
+}
+
+.trace-section-title {
+  margin-top: 24px;
+}
+
+.trace-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0;
+  font-weight: 600;
+}
+
+.trace-field input[type="text"],
+.trace-field input[type="datetime-local"] {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.trace-window {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.trace-dish-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+  font-weight: 400;
+}
+
+.trace-dish {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.trace-dish.selected {
+  border-color: #f59e0b;
+  background: #fff7ed;
+}
+
+.trace-muted {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.trace-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+
+.trace-success {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+
+.trace-remedy {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+
+.trace-ack,
+.trace-reaction-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.trace-ack input,
+.trace-reaction-form input {
+  flex: 1;
+  min-width: 220px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.trace-report-button {
+  margin-top: 10px;
+  background: transparent;
+  color: #b45309;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.trace-report-button:hover {
+  background: #fff7ed;
+}
