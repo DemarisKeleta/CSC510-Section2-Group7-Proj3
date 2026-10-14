@@ -76,16 +76,16 @@ public class RegisterPageTest {
         // Fill in registration form
         driver.findElement(By.id("username")).sendKeys("testuser");
         driver.findElement(By.id("email")).sendKeys("testuser@valid.com");
-        driver.findElement(By.id("password")).sendKeys("Melvin");
-        driver.findElement(By.id("confirmPassword")).sendKeys("Melvin");
+        driver.findElement(By.id("password")).sendKeys("Melvin123");
+        driver.findElement(By.id("confirmPassword")).sendKeys("Melvin123");
         driver.findElement(By.id("role")).sendKeys("customer");
 
-        // Submit the form
+        // Submit the form (passwords need at least 8 characters since the Sep 19 AuthServiceImpl change)
         driver.findElement(By.className("login-button")).click();
 
         // Wait for redirection to login page
         wait.until(d -> d.getCurrentUrl().equals("http://localhost:3000/"));
-        attemptLogin("testuser", "Melvin");
+        attemptLogin("testuser", "Melvin123");
 
         wait.until(d -> d.getCurrentUrl().equals("http://localhost:3000/preferences"));
         assertEquals(driver.getCurrentUrl(), "http://localhost:3000/preferences");
