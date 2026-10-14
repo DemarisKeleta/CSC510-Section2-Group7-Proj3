@@ -78,6 +78,8 @@ public class OrderServiceImpl implements OrderService {
         order.setCost(orderDto.getCost());
         order.setStatus(orderDto.getStatus());
         order.setDeliveryCost(orderDto.getDeliveryCost());
+        // stamp the creation time so CalorieBudgetServiceImpl can later tell which orders were placed "today"
+        order.setCreatedAt(java.time.Instant.now());
         
         // Set the current user as the owner of this order
         final User currentUser = userService.getCurrentUser();

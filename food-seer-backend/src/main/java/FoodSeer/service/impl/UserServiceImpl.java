@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 
 import FoodSeer.entity.Order;
 import FoodSeer.entity.User;
+// used to clean up a user's meal logs before deleting them, in deleteUser below
+import FoodSeer.repositories.MealLogRepository;
 import FoodSeer.repositories.OrderRepository;
 import FoodSeer.repositories.UserRepository;
 import FoodSeer.service.UserService;
@@ -20,6 +22,10 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private OrderRepository orderRepository;
+
+    // used by deleteUser below to avoid an FK-constraint failure on delete
+    @Autowired
+    private MealLogRepository mealLogRepository;
 
     @Override
     public User getCurrentUser () {
@@ -61,11 +67,16 @@ public class UserServiceImpl implements UserService {
         }
         
         final User user = userOpt.get();
-        
+
         // Delete all orders associated with this user
         final List<Order> userOrders = orderRepository.findByUser(user);
         orderRepository.deleteAll(userOrders);
-        
+
+        // Delete all meal logs associated with this user (same FK-constraint
+        // reasoning as orders above - deleting the user first would fail).
+        // look up then delete, same two-step pattern used for orders above
+        mealLogRepository.deleteAll(mealLogRepository.findByUser(user));
+
         // Now delete the user
         userRepository.deleteById(id);
     }
@@ -77,12 +88,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User updateUserPreferences(String username, String costPreference, String dietaryRestrictions) {
+    // signature extended with a 4th parameter, dailyCalorieGoal
+    public User updateUserPreferences(String username, String costPreference, String dietaryRestrictions, Integer dailyCalorieGoal) {
         final Optional<User> u = userRepository.findByUsername(username);
         if (u.isEmpty()) return null;
         final User user = u.get();
         user.setCostPreference(costPreference);
         user.setDietaryRestrictions(dietaryRestrictions);
+        // Partial update: a request that omits dailyCalorieGoal (null) must not
+        // wipe out a previously-set goal, since the existing frontend preferences
+        // form does not send this field at all.
+        // only overwrite the goal when a real value was sent, unlike cost/dietary above
+        if (dailyCalorieGoal != null) {
+            user.setDailyCalorieGoal(dailyCalorieGoal);
+        }
         return userRepository.save(user);
     }
 }

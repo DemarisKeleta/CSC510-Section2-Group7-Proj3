@@ -1,6 +1,8 @@
 package FoodSeer.entity;
 
 import java.math.BigDecimal;
+// Instant backs the new createdAt field below
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +53,24 @@ public class Order {
     private DriverStats driver;
 
     private BigDecimal deliveryCost;
+
+    /**
+     * When this order was placed. Used to compute "calories consumed today"
+     * for the Fitness-Based Calorie Tracking feature - set once at creation,
+     * never updated afterward.
+     */
+    // no column annotation needed - plain Instant mapping is enough for ddl-auto=update to add the column
+    private Instant createdAt;
+
+    // getter used by CalorieBudgetServiceImpl to filter today's orders
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    // setter called once, from OrderServiceImpl.createOrder
+    public void setCreatedAt(final Instant createdAt) {
+        this.createdAt = createdAt;
+    }
 
     public BigDecimal getCost() {
         return cost;

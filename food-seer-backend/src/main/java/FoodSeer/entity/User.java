@@ -46,6 +46,13 @@ public class User {
     @Column ( length = 500 )
     private String dietaryRestrictions;
 
+    /**
+     * Customer's self-set daily calorie goal. Nullable: a customer who
+     * never set one has no goal, distinct from a goal of 0.
+     */
+    // Integer (not int) so "never set" is representable as null; Lombok @Data above generates the getter/setter
+    private Integer dailyCalorieGoal;
+
     public User ( final User o, final String pass ) {
         this.id = o.getId();
         this.username = o.getUsername();
@@ -54,6 +61,8 @@ public class User {
         this.role = o.getRole();
         this.costPreference = o.getCostPreference();
         this.dietaryRestrictions = o.getDietaryRestrictions();
+        // carry the calorie goal through this copy-constructor, same as the other preference fields above
+        this.dailyCalorieGoal = o.getDailyCalorieGoal();
     }
 
     public User ( final RegisterRequestDto o, final String pass, final String role ) {

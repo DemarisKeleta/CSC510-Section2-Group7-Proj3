@@ -270,7 +270,8 @@ public class FoodServiceImpl implements FoodService {
      */
     @Override
     @Transactional
-    public FoodDto updateFood(final String name, final int amount, final int price, final List<String> allergies) {
+    // signature extended with a calories parameter to match the interface change above
+    public FoodDto updateFood(final String name, final int amount, final int price, final List<String> allergies, final Integer calories) {
         // check for invalid units
         if (amount < 0) {
             throw new IllegalArgumentException("The units of the food must be a positive integer.");
@@ -288,6 +289,8 @@ public class FoodServiceImpl implements FoodService {
             foodDto.setAmount( amount );
             foodDto.setPrice(price);
             foodDto.setAllergies(allergies);
+            // apply the new calories value the same way amount/price/allergies are applied above
+            foodDto.setCalories(calories);
 
             final Food food = FoodMapper.mapToFood( foodDto );
             final Food savedFood = foodRepository.saveAndFlush( food );
