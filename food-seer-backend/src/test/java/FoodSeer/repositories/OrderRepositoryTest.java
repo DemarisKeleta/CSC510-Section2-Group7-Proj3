@@ -52,12 +52,19 @@ class OrderRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
+    /** Reference to MealLog repository */
+    // needed to clear meal_logs below before userRepository.deleteAll() runs
+    @Autowired
+    private MealLogRepository mealLogRepository;
+
     /**
      * Sets up the test case by clearing tables and adding initial food/inventory data.
      */
     @BeforeEach
     public void setUp() throws Exception {
         orderRepository.deleteAll();
+        // clear meal_logs before users, same reasoning as orders above: its FK blocks user deletion otherwise
+        mealLogRepository.deleteAll();
         foodRepository.deleteAll();
         userRepository.deleteAll();
 

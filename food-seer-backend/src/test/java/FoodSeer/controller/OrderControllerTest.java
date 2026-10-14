@@ -23,6 +23,8 @@ import FoodSeer.dto.OrderDto;
 import FoodSeer.entity.Food;
 import FoodSeer.entity.User;
 import FoodSeer.repositories.FoodRepository;
+// needed so setUp() below can clear meal_logs before deleting users, avoiding an FK-constraint failure
+import FoodSeer.repositories.MealLogRepository;
 import FoodSeer.repositories.OrderRepository;
 import FoodSeer.repositories.UserRepository;
 import FoodSeer.service.InventoryService;
@@ -59,12 +61,19 @@ class OrderControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    /** Repository for meal logs */
+    // needed to clear meal_logs below before userRepository.deleteAll() runs
+    @Autowired
+    private MealLogRepository mealLogRepository;
+
     /**
      * Sets up test case by clearing repositories and creating sample data.
      */
     @BeforeEach
     public void setUp() throws Exception {
         orderRepository.deleteAll();
+        // clear meal_logs before users, same reasoning as orders above: its FK blocks user deletion otherwise
+        mealLogRepository.deleteAll();
         foodRepository.deleteAll();
         userRepository.deleteAll();
 
