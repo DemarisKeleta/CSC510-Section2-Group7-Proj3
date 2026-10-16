@@ -326,8 +326,15 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderDto> getActiveOrders(String username){
-        List<Order> activeOrders = orderRepository.findByDriverUsernameAndStatus(username, "Picked Up");
-        return activeOrders.stream().map(OrderMapper::mapToOrderDto).collect(Collectors.toList());
+    public List<OrderDto> getActiveOrders(String username) {
+        List<Order> activeOrders =
+            orderRepository.findByDriverUsernameAndStatusIn(
+                username,
+                List.of("Claimed", "Picked Up")
+            );
+
+        return activeOrders.stream()
+            .map(OrderMapper::mapToOrderDto)
+            .collect(Collectors.toList());
     }
 }
