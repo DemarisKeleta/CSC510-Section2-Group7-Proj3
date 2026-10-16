@@ -111,7 +111,8 @@ public class FoodServiceImplTest {
         FoodDto food = new FoodDto("COFFEE", 5, 3, Arrays.asList("MILK"));
         foodService.createFood(food);
 
-        FoodDto updated = foodService.updateFood("COFFEE", 12, 5, Arrays.asList("Water"));
+        // added a 5th argument (calories) to match updateFood's new signature
+        FoodDto updated = foodService.updateFood("COFFEE", 12, 5, Arrays.asList("Water"), 450);
         assertFood(updated, "COFFEE", 12, 5, Arrays.asList("Water"));
     }
 
@@ -184,7 +185,8 @@ public class FoodServiceImplTest {
         foodService.createFood(food);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                foodService.updateFood("COFFEE", -5, 3, Arrays.asList("MILK"))
+                // added a 5th argument (calories) to match updateFood's new signature
+                foodService.updateFood("COFFEE", -5, 3, Arrays.asList("MILK"), 100)
         );
         assertEquals("The units of the food must be a positive integer.", ex.getMessage());
     }
@@ -195,7 +197,8 @@ public class FoodServiceImplTest {
         foodService.createFood(food);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                foodService.updateFood("COFFEE", 5, -1, Arrays.asList("MILK"))
+                // added a 5th argument (calories) to match updateFood's new signature
+                foodService.updateFood("COFFEE", 5, -1, Arrays.asList("MILK"), 100)
         );
         assertEquals("The price of the food must be a non-negative integer.", ex.getMessage());
     }
@@ -206,7 +209,8 @@ public class FoodServiceImplTest {
         String missingName = "NON_EXISTENT_FOOD";
 
         ResourceNotFoundException ex = assertThrows(ResourceNotFoundException.class, () ->
-                foodService.updateFood(missingName, 5, 3, Arrays.asList("NONE"))
+                // added a 5th argument (calories) to match updateFood's new signature
+                foodService.updateFood(missingName, 5, 3, Arrays.asList("NONE"), 100)
         );
 
         assertEquals("Food does not exist with name " + missingName, ex.getMessage());

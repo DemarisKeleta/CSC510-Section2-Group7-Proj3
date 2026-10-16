@@ -43,6 +43,12 @@ public class FoodDto {
     private List<String> allergies = new ArrayList<>();
 
     /**
+     * Calorie count for this food item. Nullable: not every item has one recorded.
+     */
+    // mirrors Food.calories - Integer so a missing value serializes as JSON null, not 0
+    private Integer calories;
+
+    /**
      * Default constructor
      */
     public FoodDto () {
@@ -187,5 +193,15 @@ public class FoodDto {
 
     public void setNumberOfRatings(Integer numberOfRatings) {
         this.numberOfRatings = numberOfRatings;
+    }
+
+    // getter for the calories field above
+    public Integer getCalories() {
+        return calories;
+    }
+
+    // setter for the calories field above
+    public void setCalories(Integer calories) {
+        this.calories = calories;
     }
 }

@@ -19,6 +19,7 @@ const InventoryManagement = () => {
     foodName: '',
     amount: 0,
     price: 0,
+    calories: '',
     allergies: []
   });
   const [currentUser, setCurrentUser] = useState(null);
@@ -63,6 +64,7 @@ const InventoryManagement = () => {
       foodName: '',
       amount: 0,
       price: 0,
+      calories: '',
       allergies: []
     });
     setEditingFood(null);
@@ -91,6 +93,7 @@ const InventoryManagement = () => {
         foodName: formData.foodName.toUpperCase(),
         amount: parseInt(formData.amount),
         price: parseInt(formData.price),
+        calories: formData.calories === '' ? null : parseInt(formData.calories),
         allergies: formData.allergies
       };
 
@@ -110,6 +113,7 @@ const InventoryManagement = () => {
       foodName: food.foodName,
       amount: food.amount,
       price: food.price,
+      calories: food.calories != null ? String(food.calories) : '',
       allergies: food.allergies || []
     });
     setShowAddForm(true);
@@ -128,6 +132,7 @@ const InventoryManagement = () => {
         foodName: formData.foodName.toUpperCase(),
         amount: parseInt(formData.amount),
         price: parseInt(formData.price),
+        calories: formData.calories === '' ? null : parseInt(formData.calories),
         allergies: formData.allergies
       };
 
@@ -258,6 +263,19 @@ const InventoryManagement = () => {
                   placeholder="Price"
                 />
               </div>
+
+              <div className="form-group">
+                <label htmlFor="calories">Calories</label>
+                <input
+                  type="number"
+                  id="calories"
+                  name="calories"
+                  value={formData.calories}
+                  onChange={handleInputChange}
+                  min="0"
+                  placeholder="Optional"
+                />
+              </div>
             </div>
 
             <div className="form-group">
@@ -304,6 +322,7 @@ const InventoryManagement = () => {
                 <th>ID</th>
                 <th>Name</th>
                 <th>Price</th>
+                <th>Calories</th>
                 <th>Stock</th>
                 <th>Rating</th>
                 <th>Allergies</th>
@@ -316,6 +335,7 @@ const InventoryManagement = () => {
                   <td>{food.id}</td>
                   <td>{food.foodName}</td>
                   <td>${food.price}</td>
+                  <td>{food.calories != null ? `${food.calories} cal` : '—'}</td>
                   <td>
                     <span className={food.amount > 0 ? 'stock-positive' : 'stock-zero'}>
                       {food.amount}

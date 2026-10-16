@@ -28,6 +28,9 @@ public class FoodMapper {
         foodDto.setNumberOfRatings( food.getNumberOfRatings() );
         // ---------------------------
 
+        // carry the calorie value through to the DTO, same as every other field above
+        foodDto.setCalories( food.getCalories() );
+
         return foodDto;
     }
 
@@ -45,8 +48,10 @@ public class FoodMapper {
         food.setAmount( foodDto.getAmount() );
         food.setPrice( foodDto.getPrice() );
         food.setAllergies( foodDto.getAllergies() );
-        
-        // Note: We do NOT map rating here. 
+        // carry the calorie value back into the entity when converting DTO -> entity
+        food.setCalories( foodDto.getCalories() );
+
+        // Note: We do NOT map rating here.
         // The Food Entity automatically initializes rating to 0.0 for new items.
         
         return food;

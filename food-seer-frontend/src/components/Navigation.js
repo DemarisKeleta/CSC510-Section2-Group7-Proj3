@@ -146,6 +146,16 @@ const Navigation = () => {
                 >
                   🔔 Safety Notices{unreadNotices > 0 ? ` (${unreadNotices})` : ''}
                 </button>
+
+                <button
+                  className={`nav-link ${location.pathname === '/personal-diet' ? 'active' : ''}`}
+                  onClick={() => {
+                    navigate('/personal-diet');
+                    setMenuOpen(false);
+                  }}
+                >
+                  🔥 Personal Diet
+                </button>
               </>
             )}
 

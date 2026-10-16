@@ -196,11 +196,13 @@
         <version>1.19.4</version>
         <configuration>
           <targetClasses>
-            <param>FoodSeer.service.impl.DriverStatsImpl</param>
-          </targetClasses>
-          <targetTests>
-            <param>FoodSeer.service.DriverStatsImplTest</param>
-          </targetTests>
+  <param>FoodSeer.service.impl.DriverStatsImpl</param>
+  <param>FoodSeer.service.impl.OrderServiceImpl</param>
+</targetClasses>
+<targetTests>
+  <param>FoodSeer.service.DriverStatsImplTest</param>
+  <param>FoodSeer.service.OrderServiceImplTest</param>
+</targetTests>
           <threads>1</threads>
           <timestampedReports>false</timestampedReports>
           <outputFormats>

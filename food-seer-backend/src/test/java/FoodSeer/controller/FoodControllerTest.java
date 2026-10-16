@@ -19,9 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import FoodSeer.TestUtils;
 import FoodSeer.dto.FoodDto;
+import FoodSeer.entity.User;
 import FoodSeer.repositories.FoodRepository;
 import FoodSeer.repositories.InventoryRepository;
 import FoodSeer.repositories.OrderRepository;
+import FoodSeer.repositories.UserRepository;
 import FoodSeer.service.FoodService;
 
 /**
@@ -51,6 +53,10 @@ public class FoodControllerTest {
     /** Reference to food service */
     @Autowired
     private FoodService foodService;
+
+    /** Reference to user repository (used only by the withinCalorieBudget tests below) */
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * Sets up the test case.
@@ -192,5 +198,38 @@ public class FoodControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(TestUtils.asJsonString(update)))
                 .andExpect(status().isBadRequest());
+    }
+
+    /**
+     * A customer with no saved daily calorie goal should get the full,
+     * unfiltered menu back from /withinCalorieBudget (budgetApplied=false),
+     * since there is no real budget number to filter by yet.
+     */
+    @Test
+    @WithMockUser(username = "budget_customer", roles = "CUSTOMER")
+    void testWithinCalorieBudget_noGoalSet_returnsFullMenuUnfiltered() throws Exception {
+        // @WithMockUser only fakes Spring Security's authentication - the endpoint also
+        // looks the user up in the real database, so a matching row has to exist too
+        userRepository.save(User.builder()
+                .username("budget_customer")
+                .email("budget_customer@test.com")
+                .password("password")
+                .role("ROLE_CUSTOMER")
+                .build());
+
+        final FoodDto food = new FoodDto("RICE_BOWL", 5, 8, Arrays.asList("NONE"));
+        foodService.createFood(food);
+
+        mvc.perform(get("/api/foods/withinCalorieBudget"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.budgetApplied").value(false))
+                .andExpect(jsonPath("$.foods", org.hamcrest.Matchers.hasSize(1)));
+    }
+
+    /** An unauthenticated request to the budget-aware food endpoint must be rejected with 401. */
+    @Test
+    void testWithinCalorieBudget_unauthenticated_returns401() throws Exception {
+        mvc.perform(get("/api/foods/withinCalorieBudget"))
+                .andExpect(status().isUnauthorized());
     }
 }

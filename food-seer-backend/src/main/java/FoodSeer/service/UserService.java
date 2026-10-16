@@ -32,8 +32,8 @@ public interface UserService {
     public void deleteUser(Long id);
     
     /**
-     * Update user preferences (cost preference and dietary restrictions).
+     * Update user preferences (cost preference, dietary restrictions, and daily calorie goal).
      */
-    public User updateUserPreferences(String username, String costPreference, String dietaryRestrictions);
+    public User updateUserPreferences(String username, String costPreference, String dietaryRestrictions, Integer dailyCalorieGoal);
 
 }
