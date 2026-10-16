@@ -87,6 +87,7 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("No authenticated user found");
         }
         order.setUser(currentUser);
+        order.setAllergyRestrictions(currentUser.getDietaryRestrictions());
         
         final Order savedOrder = orderRepository.save(order);
         return OrderMapper.mapToOrderDto(savedOrder);

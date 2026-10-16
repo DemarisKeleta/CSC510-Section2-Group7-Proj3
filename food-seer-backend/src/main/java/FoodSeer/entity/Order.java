@@ -60,6 +60,18 @@ public class Order {
      * never updated afterward.
      */
     // no column annotation needed - plain Instant mapping is enough for ddl-auto=update to add the column
+
+    @Column(length = 1000)
+    private String allergyRestrictions;
+
+    public String getAllergyRestrictions() {
+        return allergyRestrictions;
+    }
+
+    public void setAllergyRestrictions(String allergyRestrictions) {
+        this.allergyRestrictions = allergyRestrictions;
+    }
+    
     private Instant createdAt;
 
     // getter used by CalorieBudgetServiceImpl to filter today's orders
