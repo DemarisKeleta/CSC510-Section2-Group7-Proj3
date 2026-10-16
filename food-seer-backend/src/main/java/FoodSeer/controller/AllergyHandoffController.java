@@ -7,7 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.util.Map;
 
@@ -26,15 +29,22 @@ public class AllergyHandoffController {
 
         try {
             // Role is derived from authentication, not user input.
-            AllergyAcknowledgment acknowledgment;
 
-            try {
-                acknowledgment =
-                        allergyHandoffService.acknowledge(orderId, "STAFF");
-            } catch (SecurityException e) {
-                acknowledgment =
-                        allergyHandoffService.acknowledge(orderId, "DRIVER");
-            }
+            String role = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(authority ->
+                    authority.equals("ROLE_STAFF")
+                    || authority.equals("ROLE_DRIVER"))
+                .findFirst()
+                .orElseThrow(() ->
+                    new SecurityException("Unauthorized role"))
+                .substring(5);
+
+            AllergyAcknowledgment acknowledgment =
+                allergyHandoffService.acknowledge(orderId, role);
 
             return ResponseEntity.ok(Map.of(
                     "orderId", orderId,
