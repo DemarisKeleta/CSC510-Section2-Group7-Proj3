@@ -263,6 +263,36 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public OrderDto claimOrder(final Long orderId) {
+        final User currentUser = userService.getCurrentUser();
+
+        if (currentUser == null
+                || !"ROLE_DRIVER".equals(currentUser.getRole())) {
+            throw new SecurityException("Only drivers can claim orders");
+        }
+
+        final Order order = orderRepository.findById(orderId)
+            .orElseThrow(() ->
+                    new ResourceNotFoundException(
+                            "Order does not exist with id " + orderId));
+
+        if (!"Placed".equals(order.getStatus())
+                || order.getDriver() != null) {
+            throw new IllegalStateException(
+                "Order is not available to claim");
+        }
+
+        order.setDriver(
+            DriverStatsMapper.mapToDriverStats(
+                    driverStatsService.getDriverStats(
+                            currentUser.getUsername())));
+
+        order.setStatus("Claimed");
+
+        return OrderMapper.mapToOrderDto(orderRepository.save(order));
+    }
+
+    @Override
     public OrderDto updateOrder(final Long orderId, String username, String status){
         Optional<Order> orderList = orderRepository.findById(orderId);
 
