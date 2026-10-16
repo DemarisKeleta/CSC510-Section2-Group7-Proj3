@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {fetchDriverDashboard, getCurrentUser, getAvailableOrders, getActiveOrders, updateOrderStatus, getUnfulfilledOrders } from "../services/api";
+import {fetchDriverDashboard, getCurrentUser, getAvailableOrders, getActiveOrders, updateOrderStatus, getUnfulfilledOrders, claimOrder } from "../services/api";
 
 const DriverDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -36,6 +36,16 @@ const DriverDashboard = () => {
 
     loadDashboard();
   }, []);
+
+  const handleClaim = async (orderId) => {
+  try {
+    await claimOrder(orderId);
+    window.location.reload();
+  } catch (err) {
+    console.error(err);
+    setError(err.message || "Failed to claim order.");
+  }
+};
 
   const handlePickUp = async (orderId) => {
     try {
@@ -167,9 +177,9 @@ const DriverDashboard = () => {
 
                       <button
                         className="fulfill-button"
-                        onClick={() => handlePickUp(order.id)}
+                        onClick={() => handleClaim(order.id)}
                       >
-                        Pick Up
+                        Claim Order
                       </button>
 
                     </div>

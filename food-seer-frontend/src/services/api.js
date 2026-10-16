@@ -566,6 +566,20 @@ export const fetchDriverDashboard = async (user) => {
   return await response.json();
 };
 
+export const claimOrder = async (orderId) => {
+  const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}/claim`, {
+    method: "POST",
+    headers: createHeaders(true),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to claim order");
+  }
+
+  return await response.json();
+};
+
 export const updateOrderStatus = async (orderId, status, username) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
