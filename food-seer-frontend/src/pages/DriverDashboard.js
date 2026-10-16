@@ -47,6 +47,16 @@ const DriverDashboard = () => {
   }
 };
 
+const handleAcknowledge = async (orderId) => {
+  try {
+    await acknowledgeAllergyHandoff(orderId);
+    window.location.reload();
+  } catch (err) {
+    console.error(err);
+    setError(err.message || "Failed to acknowledge allergy warning.");
+  }
+};
+
   const handlePickUp = async (orderId) => {
     try {
       const user = await getCurrentUser();
@@ -142,6 +152,13 @@ const DriverDashboard = () => {
                             </p>
 
                             <p>Allergy handoff acknowledgment required before pickup.</p>
+                            <button
+                              className="fulfill-button"
+                              onClick={() => handleAcknowledge(order.id)}
+                            >
+                              Acknowledge Allergy Warning
+                            </button>
+                            
                           </div>
                         ) : (
                           <button
