@@ -122,7 +122,7 @@ const DriverDashboard = () => {
                         <div className="order-header">
                           <h3>Order #{order.id}</h3>
                           <span className="status-badge active">
-                            PICKED UP
+                            {order.status === "Claimed" ? "CLAIMED" : "PICKED UP"}
                           </span>
                         </div>
 
@@ -133,12 +133,24 @@ const DriverDashboard = () => {
                           </div>
                         </div>
 
-                        <button
-                          className="fulfill-button"
-                          onClick={() => handleDeliver(order.id)}
-                        >
-                          Mark as Delivered
-                        </button>
+                        {order.status === "Claimed" ? (
+                          <div>
+                            <p>
+                              {order.allergyRestrictions
+                                ? `Dietary restrictions: ${order.allergyRestrictions}`
+                                : "No dietary restrictions recorded."}
+                            </p>
+
+                            <p>Allergy handoff acknowledgment required before pickup.</p>
+                          </div>
+                        ) : (
+                          <button
+                            className="fulfill-button"
+                            onClick={() => handleDeliver(order.id)}
+                          >
+                            Mark as Delivered
+                          </button>
+                        )}
 
                       </div>
                     ))
