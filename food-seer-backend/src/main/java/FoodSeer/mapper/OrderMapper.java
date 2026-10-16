@@ -62,6 +62,8 @@ public class OrderMapper {
         dto.setStatus(order.getStatus());
         dto.setDeliveryCost(order.getDeliveryCost());
 
+        dto.setAllergyRestrictions(order.getAllergyRestrictions());
+
 //        dto.setDriverStats(DriverStatsMapper.mapToDriverStatsDto(order.getDriver()));
 
         return dto;
