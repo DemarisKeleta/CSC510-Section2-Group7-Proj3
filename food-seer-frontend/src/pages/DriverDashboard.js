@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import {fetchDriverDashboard, getCurrentUser, getAvailableOrders, getActiveOrders, updateOrderStatus, getUnfulfilledOrders, claimOrder } from "../services/api";
+import {
+  fetchDriverDashboard,
+  getCurrentUser,
+  getAvailableOrders,
+  getActiveOrders,
+  updateOrderStatus,
+  claimOrder,
+  acknowledgeAllergyHandoff
+} from "../services/api";
 
 const DriverDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -68,7 +76,7 @@ const handleAcknowledge = async (orderId) => {
 
     } catch (err) {
       console.error(err);
-      setError("Failed to pick up order.");
+      alert(err.message || "Failed to pick up order.");
     }
   };
 
@@ -145,20 +153,34 @@ const handleAcknowledge = async (orderId) => {
 
                         {order.status === "Claimed" ? (
                           <div>
-                            <p>
-                              {order.allergyRestrictions
-                                ? `Dietary restrictions: ${order.allergyRestrictions}`
-                                : "No dietary restrictions recorded."}
-                            </p>
+                            {order.allergyRestrictions?.trim() ? (
+                              <>
+                                <p>
+                                  <strong>Dietary restrictions:</strong>{" "}
+                                  {order.allergyRestrictions}
+                                </p>
 
-                            <p>Allergy handoff acknowledgment required before pickup.</p>
+                                <p>
+                                  Restaurant staff and driver acknowledgment are required before pickup.
+                                </p>
+
+                                <button
+                                  className="fulfill-button"
+                                  onClick={() => handleAcknowledge(order.id)}
+                                >
+                                  Acknowledge Allergy Warning
+                                </button>
+                              </>
+                            ) : (
+                              <p>No dietary restrictions recorded.</p>
+                            )}
+
                             <button
                               className="fulfill-button"
-                              onClick={() => handleAcknowledge(order.id)}
+                              onClick={() => handlePickUp(order.id)}
                             >
-                              Acknowledge Allergy Warning
+                              Pick Up Order
                             </button>
-                            
                           </div>
                         ) : (
                           <button
