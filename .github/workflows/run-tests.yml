@@ -50,6 +50,10 @@ jobs:
         working-directory: food-seer-frontend
         run: npm install
 
+      - name: Run frontend unit tests (Jest)
+        working-directory: food-seer-frontend
+        run: CI=true npm test
+
       - name: Build frontend
         working-directory: food-seer-frontend
         run: CI=false npm run build
