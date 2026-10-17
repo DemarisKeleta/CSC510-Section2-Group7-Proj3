@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { logout, getCurrentUser } from '../services/api';
+import { logout, getCurrentUser, getMyUnreadNotificationCount } from '../services/api';
 
 const Navigation = () => {
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [unreadNotices, setUnreadNotices] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,6 +26,24 @@ const Navigation = () => {
     logout();
     navigate('/');
   };
+
+  // Customers: keep the unread food safety notice count fresh on every page change.
+  useEffect(() => {
+    const fetchUnreadNotices = async () => {
+      if (user?.role !== 'ROLE_CUSTOMER') {
+        setUnreadNotices(0);
+        return;
+      }
+      try {
+        const count = await getMyUnreadNotificationCount();
+        setUnreadNotices(count);
+      } catch (error) {
+        console.error('Error fetching safety notices:', error);
+      }
+    };
+
+    fetchUnreadNotices();
+  }, [user, location]);
 
   const isAdmin = user?.role === 'ROLE_ADMIN';
   const isStaff = user?.role === 'ROLE_STAFF' || isAdmin;
@@ -119,6 +138,16 @@ const Navigation = () => {
                 </button>
 
                 <button
+                  className={`nav-link ${location.pathname === '/notices' ? 'active' : ''}`}
+                  onClick={() => {
+                    navigate('/notices');
+                    setMenuOpen(false);
+                  }}
+                >
+                  🔔 Safety Notices{unreadNotices > 0 ? ` (${unreadNotices})` : ''}
+                </button>
+
+                <button
                   className={`nav-link ${location.pathname === '/personal-diet' ? 'active' : ''}`}
                   onClick={() => {
                     navigate('/personal-diet');
@@ -152,6 +181,16 @@ const Navigation = () => {
                   }}
                 >
                   🏪 Inventory Management
+                </button>
+
+                <button
+                  className={`nav-link staff ${location.pathname === '/allergy-incidents' ? 'active' : ''}`}
+                  onClick={() => {
+                    navigate('/allergy-incidents');
+                    setMenuOpen(false);
+                  }}
+                >
+                  ⚠️ Allergy Incidents
                 </button>
               </>
             )}
@@ -204,6 +243,12 @@ const Navigation = () => {
           </div>
         </div>
       </div>
+      {isStandardUser && unreadNotices > 0 && location.pathname !== '/notices' && (
+        <div className="trace-banner" onClick={() => navigate('/notices')}>
+          ⚠️ You have {unreadNotices} unread food safety {unreadNotices === 1 ? 'notice' : 'notices'} about your
+          orders. Tap to read.
+        </div>
+      )}
     </nav>
   );
 };

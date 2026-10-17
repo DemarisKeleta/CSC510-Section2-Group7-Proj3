@@ -17,6 +17,8 @@ import AdminRoute from './components/AdminRoute';
 import Dashboard from './pages/Dashboard';
 import Navigation from './components/Navigation';
 import DriverDashboard from './pages/DriverDashboard';
+import AllergyIncidents from './pages/AllergyIncidents';
+import SafetyNotices from './pages/SafetyNotices';
 import { isAuthenticated } from './services/api';
 
 // Protected Route component
@@ -191,6 +193,28 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+          {/* Allergy trace-back: staff incident page and customer notices */}
+          <Route
+            path="/allergy-incidents"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AllergyIncidents />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notices"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <SafetyNotices />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
 
           {/* Catch all - redirect to login */}
           <Route path="*" element={<Navigate to="/" />} />

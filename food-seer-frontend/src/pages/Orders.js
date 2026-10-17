@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMyOrders, getCurrentUser, rateFoodItem } from '../services/api'; // Added rateFoodItem
+import { getMyOrders, getCurrentUser, rateFoodItem, reportCustomerReaction } from '../services/api'; // Added rateFoodItem
+import { ALLERGEN_SUGGESTIONS } from '../components/allergyOptions';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -9,6 +10,13 @@ const Orders = () => {
   
   // New state to track dropdown values: { "foodId-orderId": 5 }
   const [ratings, setRatings] = useState({});
+
+  // Allergy reaction reports: which order's form is open, what was typed, and
+  // the result shown on each order card.
+  const [reactionOrderId, setReactionOrderId] = useState(null);
+  const [reactionAllergen, setReactionAllergen] = useState('');
+  const [reactionSubmitting, setReactionSubmitting] = useState(false);
+  const [reactionResults, setReactionResults] = useState({});
   
   const navigate = useNavigate();
 
@@ -81,6 +89,40 @@ const Orders = () => {
 
   // ---------------------------
 
+  const openReactionForm = (orderId) => {
+    setReactionOrderId(orderId);
+    setReactionAllergen('');
+  };
+
+  const closeReactionForm = () => {
+    setReactionOrderId(null);
+    setReactionAllergen('');
+  };
+
+  const handleReportReaction = async (orderId) => {
+    if (reactionAllergen.trim() === '') {
+      setReactionResults({ ...reactionResults, [orderId]: { ok: false, text: 'Please enter the allergen you reacted to.' } });
+      return;
+    }
+    setReactionSubmitting(true);
+    try {
+      await reportCustomerReaction(orderId, reactionAllergen.trim());
+      setReactionResults({
+        ...reactionResults,
+        [orderId]: {
+          ok: true,
+          text: 'Thank you. The restaurant has been notified, and other customers who may have been exposed '
+            + 'will get a private notice. If you feel unwell, please seek medical care.',
+        },
+      });
+      closeReactionForm();
+    } catch (error) {
+      setReactionResults({ ...reactionResults, [orderId]: { ok: false, text: error.message } });
+    } finally {
+      setReactionSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="orders-container">
@@ -149,6 +191,43 @@ const Orders = () => {
                   <p><strong>Order ID:</strong> #{order.id}</p>
                   <p><strong>Total Items:</strong> {order.foods.length}</p>
                   <p><strong>Total Price:</strong> ${getTotalPrice(order)}</p>
+
+                  {/* Allergy reaction report */}
+                  {reactionOrderId === order.id ? (
+                    <div className="trace-reaction-form">
+                      <input
+                        type="text"
+                        list={`trace-reaction-allergens-${order.id}`}
+                        value={reactionAllergen}
+                        onChange={(event) => setReactionAllergen(event.target.value)}
+                        placeholder="What did you react to? For example: Peanuts"
+                      />
+                      <datalist id={`trace-reaction-allergens-${order.id}`}>
+                        {ALLERGEN_SUGGESTIONS.map((option) => (
+                          <option key={option} value={option} />
+                        ))}
+                      </datalist>
+                      <button
+                        className="create-button"
+                        disabled={reactionSubmitting}
+                        onClick={() => handleReportReaction(order.id)}
+                      >
+                        {reactionSubmitting ? 'Sending...' : 'Send report'}
+                      </button>
+                      <button className="back-button" onClick={closeReactionForm}>
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button className="trace-report-button" onClick={() => openReactionForm(order.id)}>
+                      ⚠️ Report an allergic reaction
+                    </button>
+                  )}
+                  {reactionResults[order.id] && (
+                    <div className={reactionResults[order.id].ok ? 'trace-success' : 'trace-error'}>
+                      {reactionResults[order.id].text}
+                    </div>
+                  )}
                 </div>
 
                 <div className="order-items">

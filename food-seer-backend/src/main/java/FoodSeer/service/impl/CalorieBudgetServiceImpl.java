@@ -1,8 +1,8 @@
 package FoodSeer.service.impl;
 
 // used to find which calendar day an order's timestamp falls on
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 // list types used throughout this class
 import java.util.ArrayList;
@@ -196,13 +196,13 @@ public class CalorieBudgetServiceImpl implements CalorieBudgetService {
         // check each order to see if it was placed today
         for (final Order order : orders) {
             // when this order was created
-            final Instant createdAt = order.getCreatedAt();
+            final LocalDateTime createdAt = order.getCreatedAt();
             // orders created before this field existed have no timestamp - skip them rather than guessing
             if (createdAt == null) {
                 continue;
             }
-            // convert the instant to a calendar date in the server's time zone
-            final LocalDate orderDate = createdAt.atZone(ZoneId.systemDefault()).toLocalDate();
+            // createdAt is already in the server's local time, so take its calendar date
+            final LocalDate orderDate = createdAt.toLocalDate();
             // only orders placed today count toward today's consumption
             if (!orderDate.equals(today)) {
                 continue;

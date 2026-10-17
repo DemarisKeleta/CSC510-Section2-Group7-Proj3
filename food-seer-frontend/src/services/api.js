@@ -621,3 +621,106 @@ export const getActiveOrders = async (username) => {
     throw error;
   }
 };
+
+// Allergy trace-back API calls
+
+// Reads the backend's error message from a failed response, when it has one.
+const readErrorMessage = async (response, fallback) => {
+  try {
+    const data = await response.json();
+    if (data && data.message) {
+      return data.message;
+    }
+  } catch (parseError) {
+    // The body was not JSON, so use the fallback message.
+  }
+  return fallback;
+};
+
+// Staff: report that dishes may carry an allergen during a time window.
+export const reportRestaurantIncident = async (allergen, foodIds, windowStart, windowEnd) => {
+  const response = await fetch(`${API_BASE_URL}/api/incidents`, {
+    method: 'POST',
+    headers: createHeaders(true),
+    body: JSON.stringify({ allergen, foodIds, windowStart, windowEnd }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Failed to report the incident'));
+  }
+  return await response.json();
+};
+
+// Customer: report a reaction after one of your own orders.
+export const reportCustomerReaction = async (orderId, allergen) => {
+  const response = await fetch(`${API_BASE_URL}/api/incidents/reaction`, {
+    method: 'POST',
+    headers: createHeaders(true),
+    body: JSON.stringify({ orderId, allergen }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Failed to report the reaction'));
+  }
+  return await response.json();
+};
+
+// Staff: list every incident, newest first.
+export const getIncidents = async () => {
+  const response = await fetch(`${API_BASE_URL}/api/incidents`, {
+    method: 'GET',
+    headers: createHeaders(true),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Failed to load incidents'));
+  }
+  return await response.json();
+};
+
+// Staff: acknowledge an incident and say what the restaurant offers.
+export const acknowledgeIncident = async (incidentId, remedy) => {
+  const response = await fetch(`${API_BASE_URL}/api/incidents/${incidentId}/acknowledge`, {
+    method: 'POST',
+    headers: createHeaders(true),
+    body: JSON.stringify({ remedy }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Failed to acknowledge the incident'));
+  }
+  return await response.json();
+};
+
+// Customer: your own safety notices, newest first.
+export const getMyNotifications = async () => {
+  const response = await fetch(`${API_BASE_URL}/api/notifications/my`, {
+    method: 'GET',
+    headers: createHeaders(true),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Failed to load notices'));
+  }
+  return await response.json();
+};
+
+// Customer: how many of your notices you have not acknowledged yet.
+export const getMyUnreadNotificationCount = async () => {
+  const response = await fetch(`${API_BASE_URL}/api/notifications/my/unread-count`, {
+    method: 'GET',
+    headers: createHeaders(true),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Failed to load the notice count'));
+  }
+  const data = await response.json();
+  return data.count;
+};
+
+// Customer: acknowledge one of your notices.
+export const acknowledgeNotification = async (notificationId) => {
+  const response = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}/acknowledge`, {
+    method: 'POST',
+    headers: createHeaders(true),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Failed to acknowledge the notice'));
+  }
+  return await response.json();
+};

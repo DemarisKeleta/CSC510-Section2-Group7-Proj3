@@ -11,8 +11,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
@@ -167,7 +167,7 @@ class CalorieBudgetServiceImplTest {
         food.setCalories(600);
         final Order todaysOrder = new Order(1L, "lunch order");
         todaysOrder.setFoods(List.of(food));
-        todaysOrder.setCreatedAt(Instant.now());
+        todaysOrder.setCreatedAt(LocalDateTime.now());
         when(orderRepository.findByUser(u)).thenReturn(List.of(todaysOrder));
 
         final MealLog loggedBreakfast = new MealLog();
@@ -200,7 +200,7 @@ class CalorieBudgetServiceImplTest {
         food.setCalories(800);
         final Order yesterdaysOrder = new Order(2L, "yesterday order");
         yesterdaysOrder.setFoods(List.of(food));
-        yesterdaysOrder.setCreatedAt(Instant.now().minus(java.time.Duration.ofDays(1)));
+        yesterdaysOrder.setCreatedAt(LocalDateTime.now().minusDays(1));
         when(orderRepository.findByUser(u)).thenReturn(List.of(yesterdaysOrder));
         when(mealLogRepository.findByUserAndLogDate(eq(u), any(LocalDate.class))).thenReturn(List.of());
 
@@ -226,7 +226,7 @@ class CalorieBudgetServiceImplTest {
         final Food untaggedFood = new Food("MYSTERY", 1, 5, List.of());
         final Order order = new Order(3L, "order");
         order.setFoods(List.of(untaggedFood));
-        order.setCreatedAt(Instant.now());
+        order.setCreatedAt(LocalDateTime.now());
         when(orderRepository.findByUser(u)).thenReturn(List.of(order));
         when(mealLogRepository.findByUserAndLogDate(eq(u), any(LocalDate.class))).thenReturn(List.of());
 
