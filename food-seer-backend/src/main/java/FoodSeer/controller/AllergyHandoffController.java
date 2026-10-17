@@ -65,4 +65,30 @@ public class AllergyHandoffController {
                     .body(e.getMessage());
         }
     }
+
+        @PreAuthorize("hasAnyRole('STAFF', 'DRIVER')")
+        @GetMapping("/status")
+        public ResponseEntity<?> getStatus(@PathVariable Long orderId) {
+            try {
+                allergyHandoffService.validateStatusAccess(orderId);
+
+                boolean staffAcknowledged =
+                    allergyHandoffService.isAcknowledged(orderId, "STAFF");
+
+                boolean driverAcknowledged =
+                    allergyHandoffService.isAcknowledged(orderId, "DRIVER");
+
+                return ResponseEntity.ok(Map.of(
+                    "orderId", orderId,
+                    "staffAcknowledged", staffAcknowledged,
+                    "driverAcknowledged", driverAcknowledged
+                 ));
+            } catch (SecurityException e) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(e.getMessage());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+            }
+        }
 }

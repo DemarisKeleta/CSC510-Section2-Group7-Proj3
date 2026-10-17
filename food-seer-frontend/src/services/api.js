@@ -583,6 +583,23 @@ export const acknowledgeAllergyHandoff = async (orderId) => {
   return await response.json();
 };
 
+export const getAllergyHandoffStatus = async (orderId) => {
+  const response = await fetch(
+    `${API_BASE_URL}/api/orders/${orderId}/allergy-handoff/status`,
+    {
+      method: "GET",
+      headers: createHeaders(true),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to fetch allergy handoff status");
+  }
+
+  return await response.json();
+};
+
 export const claimOrder = async (orderId) => {
   const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}/claim`, {
     method: "POST",

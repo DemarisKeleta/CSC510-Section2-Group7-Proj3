@@ -43,6 +43,12 @@ public class AllergyHandoffService {
                 .orElseThrow(() ->
                         new IllegalArgumentException("Order not found"));
 
+        if (order.getIsFulfilled()
+                || "Delivered".equalsIgnoreCase(order.getStatus())) {
+            throw new IllegalStateException(
+                "Cannot acknowledge an order that has already been completed");
+        }
+
         if (order.getAllergyRestrictions() == null
                 || order.getAllergyRestrictions().isBlank()) {
             throw new IllegalStateException(
@@ -84,4 +90,27 @@ public class AllergyHandoffService {
         return acknowledgmentRepository.existsByOrderIdAndActorRole(
                 orderId, role);
     }
+
+    public void validateStatusAccess(Long orderId) {
+        User currentUser = userService.getCurrentUser();
+
+         if (currentUser == null) {
+            throw new SecurityException("Authentication required");
+        }
+
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+        if ("ROLE_STAFF".equals(currentUser.getRole())) {
+            return;
+        }
+
+        if ("ROLE_DRIVER".equals(currentUser.getRole())
+                && order.getDriver() != null
+                && currentUser.getUsername().equals(order.getDriver().getUsername())) {
+            return;
+    }
+
+        throw new SecurityException("Not authorized to view this order's allergy handoff");
+}
 }

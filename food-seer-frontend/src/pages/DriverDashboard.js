@@ -6,7 +6,8 @@ import {
   getActiveOrders,
   updateOrderStatus,
   claimOrder,
-  acknowledgeAllergyHandoff
+  acknowledgeAllergyHandoff,
+  getAllergyHandoffStatus
 } from "../services/api";
 
 const DriverDashboard = () => {
@@ -15,6 +16,7 @@ const DriverDashboard = () => {
   const [activeOrders, setActiveOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [allergyStatus, setAllergyStatus] = useState({});
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -34,6 +36,27 @@ const DriverDashboard = () => {
         setStats(dashboardStats);
         setAvailableOrders(available);
         setActiveOrders(active);
+
+        // Load allergy acknowledgment statuses for assigned orders.
+        const statusEntries = await Promise.all(
+          active
+            .filter(order => order.allergyRestrictions?.trim())
+            .map(async order => {
+              try {
+                const status = await getAllergyHandoffStatus(order.id);
+                return [order.id, status];
+              } catch (err) {
+                console.error(
+                  `Failed to load allergy status for order ${order.id}:`,
+                  err
+                );
+                return [order.id, null];
+              }
+            })
+        );
+
+setAllergyStatus(Object.fromEntries(statusEntries));
+
       } catch (err) {
         console.error(err);
         setError("Failed to load dashboard data.");
@@ -164,12 +187,22 @@ const handleAcknowledge = async (orderId) => {
                                   Restaurant staff and driver acknowledgment are required before pickup.
                                 </p>
 
-                                <button
-                                  className="fulfill-button"
-                                  onClick={() => handleAcknowledge(order.id)}
-                                >
-                                  Acknowledge Allergy Warning
-                                </button>
+                                {allergyStatus[order.id]?.driverAcknowledged ? (
+                                  <p>✓ Driver allergy warning acknowledged</p>
+                                ) : allergyStatus[order.id] === undefined ? (
+                                  <p>Checking acknowledgment status...</p>
+                                ) : allergyStatus[order.id] === null ? (
+                                  <p>Unable to verify acknowledgment status. Please refresh.</p>
+                                ) : !allergyStatus[order.id].staffAcknowledged ? (
+                                  <p>Waiting for restaurant staff to acknowledge the allergy warning.</p>
+                                ) : (
+                                  <button
+                                    className="fulfill-button"
+                                    onClick={() => handleAcknowledge(order.id)}
+                                  >
+                                    Acknowledge Allergy Warning
+                                    </button>
+                                  )}
                               </>
                             ) : (
                               <p>No dietary restrictions recorded.</p>

@@ -5,7 +5,8 @@ import {
   getFulfilledOrders,
   fulfillOrder,
   getCurrentUser,
-  acknowledgeAllergyHandoff
+  acknowledgeAllergyHandoff,
+  getAllergyHandoffStatus
 } from '../services/api';
 
 const OrderManagement = () => {
@@ -14,6 +15,7 @@ const OrderManagement = () => {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('unfulfilled'); // unfulfilled or fulfilled
   const [processing, setProcessing] = useState({});
+  const [allergyStatus, setAllergyStatus] = useState({});
   const navigate = useNavigate();
 
   const fetchOrders = async () => {
@@ -28,8 +30,31 @@ const OrderManagement = () => {
 
       const unfulfilled = await getUnfulfilledOrders();
       const fulfilled = await getFulfilledOrders();
+
       setUnfulfilledOrders(unfulfilled);
       setFulfilledOrders(fulfilled);
+
+      // Retrieve acknowledgment status for orders with dietary restrictions.
+      if (user.role === 'ROLE_STAFF') {
+        const statusEntries = await Promise.all(
+          unfulfilled
+            .filter(order => order.allergyRestrictions?.trim())
+            .map(async order => {
+              try {
+                const status = await getAllergyHandoffStatus(order.id);
+                return [order.id, status];
+              } catch (error) {
+                console.error(
+                  `Failed to load allergy status for order ${order.id}:`,
+                    error
+                );
+                return [order.id, null];
+              }
+            })
+          );
+
+          setAllergyStatus(Object.fromEntries(statusEntries));
+        }
     } catch (error) {
       console.error('Error fetching orders:', error);
       navigate('/');
@@ -174,15 +199,25 @@ const OrderManagement = () => {
                     {order.allergyRestrictions}
                   </p>
 
-                  <button
-                    className="fulfill-button"
-                    onClick={() => handleAcknowledgeAllergy(order.id)}
-                    disabled={processing[order.id]}
-                  >
-                    {processing[order.id]
-                      ? 'Processing...'
-                      : 'Acknowledge Allergy Warning'}
+                  {allergyStatus[order.id]?.staffAcknowledged ? (
+                    <p className="allergy-acknowledged">
+                      ✓ Restaurant allergy warning acknowledged
+                    </p>
+                  ) : allergyStatus[order.id] === undefined ? (
+  <p>Checking acknowledgment status...</p>
+                  ) : allergyStatus[order.id] === null ? (
+                    <p>Unable to verify acknowledgment status. Please refresh.</p>
+                  ) : (
+                    <button
+                      className="fulfill-button"
+                      onClick={() => handleAcknowledgeAllergy(order.id)}
+                      disabled={processing[order.id]}
+                    >
+                      {processing[order.id]
+                        ? 'Processing...'
+                        : 'Acknowledge Allergy Warning'}
                     </button>
+                  )}
                   </div>
                 )}
 
