@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUnfulfilledOrders, getFulfilledOrders, fulfillOrder, getCurrentUser } from '../services/api';
+import {
+  getUnfulfilledOrders,
+  getFulfilledOrders,
+  fulfillOrder,
+  getCurrentUser,
+  acknowledgeAllergyHandoff
+} from '../services/api';
 
 const OrderManagement = () => {
   const [unfulfilledOrders, setUnfulfilledOrders] = useState([]);
@@ -35,6 +41,21 @@ const OrderManagement = () => {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  const handleAcknowledgeAllergy = async (orderId) => {
+  setProcessing(prev => ({ ...prev, [orderId]: true }));
+
+  try {
+    await acknowledgeAllergyHandoff(orderId);
+    alert('Allergy warning acknowledged successfully!');
+    await fetchOrders();
+  } catch (error) {
+    console.error('Allergy acknowledgment failed:', error);
+    alert(error.message || 'Failed to acknowledge allergy warning.');
+  } finally {
+    setProcessing(prev => ({ ...prev, [orderId]: false }));
+  }
+};
 
   const handleFulfillOrder = async (orderId) => {
     if (!window.confirm('Mark this order as fulfilled?')) return;
@@ -143,6 +164,27 @@ const OrderManagement = () => {
                   <span className="value">${getTotalPrice(order)}</span>
                 </div>
               </div>
+
+              {view === 'unfulfilled' && order.allergyRestrictions?.trim() && (
+                <div className="allergy-handoff-warning">
+                  <h4>Dietary Restriction Warning</h4>
+
+                  <p>
+                    <strong>Customer restrictions:</strong>{' '}
+                    {order.allergyRestrictions}
+                  </p>
+
+                  <button
+                    className="fulfill-button"
+                    onClick={() => handleAcknowledgeAllergy(order.id)}
+                    disabled={processing[order.id]}
+                  >
+                    {processing[order.id]
+                      ? 'Processing...'
+                      : 'Acknowledge Allergy Warning'}
+                    </button>
+                  </div>
+                )}
 
               <div className="order-items-detail">
                 <h4>Order Items:</h4>
