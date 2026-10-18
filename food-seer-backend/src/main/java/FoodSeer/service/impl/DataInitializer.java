@@ -13,9 +13,11 @@ import org.springframework.stereotype.Component;
 import FoodSeer.entity.User;
 import FoodSeer.entity.Role;
 import FoodSeer.entity.Food;
+import FoodSeer.entity.Allergen;
 import FoodSeer.repositories.UserRepository;
 import FoodSeer.repositories.RoleRepository;
 import FoodSeer.repositories.FoodRepository;
+import FoodSeer.repositories.AllergenRepository;
 
 /**
  * Initializes application data such as a default admin user.
@@ -26,6 +28,7 @@ public class DataInitializer {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final FoodRepository foodRepository;
+    private final AllergenRepository allergenRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.admin-user-password:admin}")
@@ -34,10 +37,12 @@ public class DataInitializer {
     public DataInitializer(UserRepository userRepository,
                            RoleRepository roleRepository,
                            FoodRepository foodRepository,
+                           AllergenRepository allergenRepository,
                            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.foodRepository = foodRepository;
+        this.allergenRepository = allergenRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -72,6 +77,20 @@ public class DataInitializer {
             admin.setPassword(hash);
             userRepository.save(admin);
             System.out.println("Updated admin user password to: " + adminPassword);
+        }
+
+        // Seed the shared allergen list with the original fixed vocabulary, once.
+        // Customers can add to this list later via AllergenController.
+        if (allergenRepository.count() == 0) {
+            final List<String> initialAllergens = Arrays.asList(
+                    "MILK", "LACTOSE", "EGGS", "FISH", "SHELLFISH", "TREE-NUTS", "PEANUTS",
+                    "WHEAT", "GLUTEN", "SOY", "SESAME", "CORN", "SULFITES", "MUSTARD",
+                    "MEAT", "BEEF", "PORK", "POULTRY", "GELATIN", "CAFFEINE", "DAIRY"
+            );
+            for (final String name : initialAllergens) {
+                allergenRepository.save(new Allergen(name));
+            }
+            System.out.println("Seeded " + initialAllergens.size() + " initial allergens.");
         }
 
         // Initialize sample food data if database is empty

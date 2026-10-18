@@ -128,6 +128,72 @@ export const getCalorieBudget = async () => {
   }
 };
 
+// fetches the signed-in user's per-day calorie consumption history, most recent day first
+export const getCalorieHistory = async () => {
+  // network/parsing errors are caught below and re-thrown after logging
+  try {
+    // GET the history endpoint, attaching the auth token via createHeaders(true)
+    const response = await fetch(`${API_BASE_URL}/api/users/me/calorieHistory`, {
+      // this is a read-only lookup
+      method: 'GET',
+      // true = include the Authorization header, since this endpoint requires login
+      headers: createHeaders(true),
+    });
+
+    // a non-2xx status means the request failed server-side
+    if (!response.ok) {
+      // surface a readable error to the caller instead of an unhandled rejection
+      throw new Error('Failed to fetch calorie history');
+    }
+
+    // parse and return the JSON array of { date, caloriesConsumed } rows
+    return await response.json();
+  } catch (error) {
+    // log for debugging, then...
+    console.error('Get calorie history error:', error);
+    // ...let the caller (the History page) handle showing an error state
+    throw error;
+  }
+};
+
+export const getAllergens = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/allergens`, {
+      method: 'GET',
+      headers: createHeaders(true),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch allergens');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get allergens error:', error);
+    throw error;
+  }
+};
+
+export const addAllergen = async (name) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/allergens`, {
+      method: 'POST',
+      headers: createHeaders(true),
+      body: JSON.stringify({ name }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Failed to add allergen');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Add allergen error:', error);
+    throw error;
+  }
+};
+
 export const logMeal = async (mealType, calories) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/users/me/mealLog`, {
