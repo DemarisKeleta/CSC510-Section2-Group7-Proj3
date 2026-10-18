@@ -383,4 +383,77 @@ class CalorieBudgetServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> calorieBudgetService.logMeal(u, "SECOND_BREAKFAST", 100));
         verify(mealLogRepository, never()).save(any());
     }
+
+    /**
+     * {@code getConsumptionHistory} should sum each day's orders and logged
+     * meals together under that day's date, and list the most recent day
+     * first - this is the data the calorie-history page renders.
+     */
+    @Test
+    void getConsumptionHistory_aggregatesOrdersAndMealLogsByDateMostRecentFirst() {
+        // the test user whose history we're computing
+        final User u = user("history_user");
+
+        // a food with a known calorie value, for today's order
+        final Food pizza = new Food("PIZZA", 5, 10, List.of());
+        // the calorie value the test asserts against later
+        pizza.setCalories(800);
+        // an order placed today
+        final Order todayOrder = new Order(10L, "today order");
+        // this order contains just the pizza
+        todayOrder.setFoods(List.of(pizza));
+        // stamp it as created right now, so it falls on "today"
+        todayOrder.setCreatedAt(LocalDateTime.now());
+
+        // a food with a known calorie value, for yesterday's order
+        final Food salad = new Food("SALAD", 5, 10, List.of());
+        // the calorie value the test asserts against later
+        salad.setCalories(300);
+        // an order placed yesterday
+        final Order yesterdayOrder = new Order(11L, "yesterday order");
+        // this order contains just the salad
+        yesterdayOrder.setFoods(List.of(salad));
+        // stamp it as created exactly one day ago, so it falls on "yesterday"
+        yesterdayOrder.setCreatedAt(LocalDateTime.now().minusDays(1));
+
+        // the service looks up every order the user has ever placed, regardless of date
+        when(orderRepository.findByUser(u)).thenReturn(List.of(todayOrder, yesterdayOrder));
+
+        // a logged meal on the same "yesterday" date, which should add onto that day's order total
+        final MealLog yesterdayMeal = new MealLog();
+        // which user this logged meal belongs to
+        yesterdayMeal.setUser(u);
+        // the calendar day this entry is for: exactly one day ago, matching yesterdayOrder
+        yesterdayMeal.setLogDate(LocalDate.now(ZoneId.systemDefault()).minusDays(1));
+        // which meal slot this entry represents
+        yesterdayMeal.setMealType("DINNER");
+        // the calorie value the test asserts against later
+        yesterdayMeal.setCalories(200);
+        // the service looks up every logged meal the user has, regardless of date
+        when(mealLogRepository.findByUser(u)).thenReturn(List.of(yesterdayMeal));
+
+        // call the method under test
+        final List<FoodSeer.dto.DailyCalorieHistoryDto> history = calorieBudgetService.getConsumptionHistory(u);
+
+        // exactly two distinct days should be reported: today and yesterday
+        assertEquals(2, history.size());
+        // most recent day first
+        assertEquals(LocalDate.now(ZoneId.systemDefault()), history.get(0).date());
+        // today's total is just the pizza order (no logged meals today)
+        assertEquals(800, history.get(0).caloriesConsumed());
+        // the second row should be yesterday's date
+        assertEquals(LocalDate.now(ZoneId.systemDefault()).minusDays(1), history.get(1).date());
+        // yesterday's order (300) plus yesterday's logged meal (200)
+        assertEquals(500, history.get(1).caloriesConsumed());
+    }
+
+    /**
+     * No authenticated user means there is nothing to report - the method
+     * should degrade to an empty list rather than throwing.
+     */
+    @Test
+    void getConsumptionHistory_returnsEmptyListForNullUser() {
+        // a null user must yield an empty list, never a thrown exception
+        assertTrue(calorieBudgetService.getConsumptionHistory(null).isEmpty());
+    }
 }

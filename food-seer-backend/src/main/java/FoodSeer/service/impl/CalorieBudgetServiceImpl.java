@@ -6,11 +6,14 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 // list types used throughout this class
 import java.util.ArrayList;
+// orders the TreeMap below newest-date-first, for getConsumptionHistory
 import java.util.Comparator;
 import java.util.List;
 // groups per-day totals for getConsumptionHistory, keyed and auto-sorted by date
 import java.util.Map;
+// wraps "maybe present" return values (used by FitnessDataService's lookup)
 import java.util.Optional;
+// the Map implementation that keeps its keys sorted, per the Comparator above
 import java.util.TreeMap;
 
 // wires in the repository/service beans this class depends on
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Service;
 // MealType.isValid validates the mealType argument to logMeal
 import FoodSeer.constant.MealType;
 import FoodSeer.dto.CalorieBudgetDto;
+// the per-day row type returned by getConsumptionHistory below
 import FoodSeer.dto.DailyCalorieHistoryDto;
 import FoodSeer.dto.FitnessData;
 import FoodSeer.dto.FoodDto;
@@ -250,8 +254,11 @@ public class CalorieBudgetServiceImpl implements CalorieBudgetService {
             final LocalDate orderDate = createdAt.toLocalDate();
             // sum this order's food calories (foods with no recorded value don't contribute)
             int orderCalories = 0;
+            // walk every food in this one order
             for (final Food food : order.getFoods()) {
+                // only add a food's calories if it actually has a recorded value
                 if (food.getCalories() != null) {
+                    // accumulate into this order's running total
                     orderCalories += food.getCalories();
                 }
             }
@@ -263,12 +270,15 @@ public class CalorieBudgetServiceImpl implements CalorieBudgetService {
         final List<MealLog> allLoggedMeals = mealLogRepository.findByUser(user);
         // fold each logged meal's calories into the running total for its logDate
         for (final MealLog meal : allLoggedMeals) {
+            // add this meal's calories into whatever is already recorded for its logDate
             totalsByDate.merge(meal.getLogDate(), meal.getCalories(), Integer::sum);
         }
 
         // convert the date->total map into the DTO list the frontend expects, already sorted most-recent-first
         return totalsByDate.entrySet().stream()
+                // turn each date/total pair into the DTO shape the frontend consumes
                 .map(e -> new DailyCalorieHistoryDto(e.getKey(), e.getValue()))
+                // materialize the stream into a List
                 .toList();
     }
 }
