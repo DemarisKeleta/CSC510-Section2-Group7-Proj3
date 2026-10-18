@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 // response shape for the new getCalorieBudget endpoint below
 import FoodSeer.dto.CalorieBudgetDto;
+// response shape for the new getCalorieHistory endpoint below
+import FoodSeer.dto.DailyCalorieHistoryDto;
 // request shape for the new logMeal endpoint below
 import FoodSeer.dto.LogMealRequestDto;
 import FoodSeer.dto.UpdateRoleDto;
@@ -134,6 +136,19 @@ public class UserController {
             // service-layer validation failure (bad meal type or negative calories) becomes a 400
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // new endpoint: GET /api/users/me/calorieHistory
+    @GetMapping ( "/me/calorieHistory" )
+    public ResponseEntity<List<DailyCalorieHistoryDto>> getCalorieHistory () {
+        // resolve who's calling
+        final var currentUser = userService.getCurrentUser();
+        // no authenticated user means this request can't be fulfilled
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+        // delegate the per-day aggregation to CalorieBudgetService
+        return ResponseEntity.ok(calorieBudgetService.getConsumptionHistory(currentUser));
     }
 
 }

@@ -1,6 +1,10 @@
 package FoodSeer.service;
 
+// returned by getConsumptionHistory, one row per day
+import java.util.List;
+
 import FoodSeer.dto.CalorieBudgetDto;
+import FoodSeer.dto.DailyCalorieHistoryDto;
 import FoodSeer.dto.FoodRecommendationDto;
 import FoodSeer.entity.User;
 
@@ -36,4 +40,11 @@ public interface CalorieBudgetService {
      */
     // upserts today's entry for one meal slot and returns the recomputed budget
     CalorieBudgetDto logMeal(User user, String mealType, int calories);
+
+    /**
+     * Returns the user's total calories consumed (orders + logged meals)
+     * for every day they have history for, most recent day first.
+     */
+    // powers the calorie-history page: one row per calendar day the user has any consumption recorded
+    List<DailyCalorieHistoryDto> getConsumptionHistory(User user);
 }

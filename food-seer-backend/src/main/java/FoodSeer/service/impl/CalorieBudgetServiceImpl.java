@@ -6,8 +6,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 // list types used throughout this class
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+// groups per-day totals for getConsumptionHistory, keyed and auto-sorted by date
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
 // wires in the repository/service beans this class depends on
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +21,7 @@ import org.springframework.stereotype.Service;
 // MealType.isValid validates the mealType argument to logMeal
 import FoodSeer.constant.MealType;
 import FoodSeer.dto.CalorieBudgetDto;
+import FoodSeer.dto.DailyCalorieHistoryDto;
 import FoodSeer.dto.FitnessData;
 import FoodSeer.dto.FoodDto;
 import FoodSeer.dto.FoodRecommendationDto;
@@ -217,5 +222,53 @@ public class CalorieBudgetServiceImpl implements CalorieBudgetService {
         }
         // final summed total across all of today's orders
         return total;
+    }
+
+    // implements the "per-day consumption history" half of the interface
+    @Override
+    public List<DailyCalorieHistoryDto> getConsumptionHistory(final User user) {
+        // defensive null check: no user means no history to show
+        if (user == null) {
+            // nothing to report rather than guessing
+            return List.of();
+        }
+
+        // TreeMap with reverse ordering so the result comes out most-recent-day-first with no extra sort step
+        final Map<LocalDate, Integer> totalsByDate = new TreeMap<>(Comparator.reverseOrder());
+
+        // every order this user has ever placed, regardless of date
+        final List<Order> allOrders = orderRepository.findByUser(user);
+        // fold each order's food calories into the running total for its calendar day
+        for (final Order order : allOrders) {
+            // when this order was created
+            final LocalDateTime createdAt = order.getCreatedAt();
+            // orders from before this field existed have no date to group by - skip rather than guessing
+            if (createdAt == null) {
+                continue;
+            }
+            // the calendar day this order counts toward
+            final LocalDate orderDate = createdAt.toLocalDate();
+            // sum this order's food calories (foods with no recorded value don't contribute)
+            int orderCalories = 0;
+            for (final Food food : order.getFoods()) {
+                if (food.getCalories() != null) {
+                    orderCalories += food.getCalories();
+                }
+            }
+            // add this order's total into whatever is already recorded for that day
+            totalsByDate.merge(orderDate, orderCalories, Integer::sum);
+        }
+
+        // every logged-meal row this user has, regardless of date
+        final List<MealLog> allLoggedMeals = mealLogRepository.findByUser(user);
+        // fold each logged meal's calories into the running total for its logDate
+        for (final MealLog meal : allLoggedMeals) {
+            totalsByDate.merge(meal.getLogDate(), meal.getCalories(), Integer::sum);
+        }
+
+        // convert the date->total map into the DTO list the frontend expects, already sorted most-recent-first
+        return totalsByDate.entrySet().stream()
+                .map(e -> new DailyCalorieHistoryDto(e.getKey(), e.getValue()))
+                .toList();
     }
 }
