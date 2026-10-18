@@ -4,6 +4,7 @@ package FoodSeer.service;
 import java.util.List;
 
 import FoodSeer.dto.CalorieBudgetDto;
+// the per-day row type returned by getConsumptionHistory below
 import FoodSeer.dto.DailyCalorieHistoryDto;
 import FoodSeer.dto.FoodRecommendationDto;
 import FoodSeer.entity.User;

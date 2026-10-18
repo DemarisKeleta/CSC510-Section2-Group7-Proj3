@@ -145,6 +145,7 @@ public class UserController {
         final var currentUser = userService.getCurrentUser();
         // no authenticated user means this request can't be fulfilled
         if (currentUser == null) {
+            // 401: nobody to compute history for
             return ResponseEntity.status(401).build();
         }
         // delegate the per-day aggregation to CalorieBudgetService

@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { getAllergens } from '../services/api';
 
 const DietaryRestrictions = ({ restrictions, onUpdate, onNext, onPrevious, canGoNext, isLastStep }) => {
   const [selectedRestrictions, setSelectedRestrictions] = useState(restrictions);
+  // Shared, site-wide allergen list (same source Personal Diet reads from and
+  // adds to) - starts empty and loads below, rather than a fixed hardcoded set.
+  const [allergenOptions, setAllergenOptions] = useState([]);
 
   // Sync state with prop when it changes (e.g., when user returns to update preferences)
   useEffect(() => {
@@ -17,29 +21,11 @@ const DietaryRestrictions = ({ restrictions, onUpdate, onNext, onPrevious, canGo
     });
   }, []);
 
-  // Comprehensive allergen options matching backend
-  const allergenOptions = [
-    { value: 'MILK', label: 'Milk/Dairy' },
-    { value: 'LACTOSE', label: 'Lactose' },
-    { value: 'EGGS', label: 'Eggs' },
-    { value: 'FISH', label: 'Fish' },
-    { value: 'SHELLFISH', label: 'Shellfish' },
-    { value: 'TREE-NUTS', label: 'Tree Nuts' },
-    { value: 'PEANUTS', label: 'Peanuts' },
-    { value: 'WHEAT', label: 'Wheat' },
-    { value: 'GLUTEN', label: 'Gluten' },
-    { value: 'SOY', label: 'Soy' },
-    { value: 'SESAME', label: 'Sesame' },
-    { value: 'CORN', label: 'Corn' },
-    { value: 'SULFITES', label: 'Sulfites' },
-    { value: 'MUSTARD', label: 'Mustard' },
-    { value: 'MEAT', label: 'Meat (All)' },
-    { value: 'BEEF', label: 'Beef' },
-    { value: 'PORK', label: 'Pork' },
-    { value: 'POULTRY', label: 'Poultry' },
-    { value: 'GELATIN', label: 'Gelatin' },
-    { value: 'CAFFEINE', label: 'Caffeine' }
-  ];
+  useEffect(() => {
+    getAllergens()
+      .then(setAllergenOptions)
+      .catch((error) => console.error('Error loading allergen list:', error));
+  }, []);
 
   const handleRestrictionChange = (value) => {
     let newRestrictions;
@@ -75,15 +61,15 @@ const DietaryRestrictions = ({ restrictions, onUpdate, onNext, onPrevious, canGo
         <div className="allergens-selection-grid">
           {allergenOptions.map((option) => (
             <label
-              key={option.value}
-              className={`allergen-option ${selectedRestrictions.includes(option.value) ? 'selected' : ''}`}
+              key={option}
+              className={`allergen-option ${selectedRestrictions.includes(option) ? 'selected' : ''}`}
             >
               <input
                 type="checkbox"
-                checked={selectedRestrictions.includes(option.value)}
-                onChange={() => handleRestrictionChange(option.value)}
+                checked={selectedRestrictions.includes(option)}
+                onChange={() => handleRestrictionChange(option)}
               />
-              <span>{option.label}</span>
+              <span>{option}</span>
             </label>
           ))}
         </div>
