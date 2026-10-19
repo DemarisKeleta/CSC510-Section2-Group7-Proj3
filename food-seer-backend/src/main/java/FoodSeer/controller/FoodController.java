@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+// restricts menu-editing endpoints below to staff/admin
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -66,6 +68,8 @@ public class FoodController {
      * The food DTO to create
      * @return response from creation
      */
+    // menu creation is a staff/admin action - without this, any logged-in customer could POST new menu items
+    @PreAuthorize ( "hasAnyRole('ADMIN', 'STAFF')" )
     @PostMapping
     public ResponseEntity<FoodDto> createFood ( @RequestBody final FoodDto foodDto ) {
         if ( foodService.isDuplicateName( foodDto.getFoodName() ) ) {
@@ -119,6 +123,8 @@ public class FoodController {
      * Id of the food to delete
      * @return Response Entity
      */
+    // menu deletion is a staff/admin action - without this, any logged-in customer could DELETE menu items
+    @PreAuthorize ( "hasAnyRole('ADMIN', 'STAFF')" )
     @DeleteMapping ( "{id}" )
     public ResponseEntity<String> deleteFood ( @PathVariable ( "id" ) final Long foodId ) {
         try {
@@ -137,6 +143,8 @@ public class FoodController {
      * FoodDto containing the updated fields
      * @return ResponseEntity containing the updated FoodDto
      */
+    // menu editing is a staff/admin action - without this, any logged-in customer could overwrite price/stock/allergies
+    @PreAuthorize ( "hasAnyRole('ADMIN', 'STAFF')" )
     @PostMapping ( "/updateFood" )
     public ResponseEntity<FoodDto> updateFood ( @RequestBody final FoodDto foodDto ) {
         // Check if food exists first by ID or name

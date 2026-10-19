@@ -307,6 +307,76 @@ class OrderServiceImplTest {
         verify(driverStatsService, times(1)).updateTotalEarnings("driverB", saved.getDeliveryCost());
     }
 
+    /**
+     * Marking "Delivered" before the order was ever "Picked Up" leaves
+     * order.getDriver() null - this must be rejected, not NPE into a 500.
+     */
+    @Test
+    void updateOrder_deliveredWithoutPickup_throwsInsteadOfNpe() {
+        Order order = new Order();
+        order.setId(202L);
+        order.setStatus("Placed");
+        order.setIsFulfilled(false);
+        // driver was never set - never went through "Picked Up"
+
+        when(orderRepository.findById(202L)).thenReturn(Optional.of(order));
+
+        assertThrows(IllegalArgumentException.class, () -> orderService.updateOrder(202L, "driverB", "Delivered"));
+        verify(orderRepository, never()).save(any());
+        verify(driverStatsService, never()).updateTotalEarnings(anyString(), any());
+    }
+
+    /**
+     * The username on the "Delivered" request must match the driver who
+     * actually picked the order up - otherwise the wrong driver could be
+     * credited and the order left in a contradictory status/isFulfilled state.
+     */
+    @Test
+    void updateOrder_deliveredByMismatchedDriver_throwsAndDoesNotCredit() {
+        Order order = new Order();
+        order.setId(203L);
+        order.setStatus("Picked Up");
+        order.setIsFulfilled(false);
+        order.setDeliveryCost(BigDecimal.valueOf(10));
+
+        DriverStats driver = new DriverStats();
+        driver.setUsername("driverB");
+        order.setDriver(driver);
+
+        when(orderRepository.findById(203L)).thenReturn(Optional.of(order));
+
+        assertThrows(IllegalArgumentException.class, () -> orderService.updateOrder(203L, "driverC", "Delivered"));
+        verify(orderRepository, never()).save(any());
+        verify(driverStatsService, never()).updateTotalEarnings(anyString(), any());
+    }
+
+    /**
+     * Calling "Delivered" twice (e.g. a double-click/retry) must not credit
+     * the driver's earnings a second time.
+     */
+    @Test
+    void updateOrder_deliveredTwice_doesNotDoubleCreditEarnings() {
+        Order order = new Order();
+        order.setId(204L);
+        order.setStatus("Delivered");
+        // already fulfilled from the first "Delivered" call
+        order.setIsFulfilled(true);
+        order.setDeliveryCost(BigDecimal.valueOf(12));
+
+        DriverStats driver = new DriverStats();
+        driver.setUsername("driverB");
+        order.setDriver(driver);
+
+        when(orderRepository.findById(204L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OrderDto dto = orderService.updateOrder(204L, "driverB", "Delivered");
+
+        assertNotNull(dto);
+        assertTrue(dto.getIsFulfilled());
+        verify(driverStatsService, never()).updateTotalEarnings(anyString(), any());
+    }
+
     @Test
     void getAvailableOrders_and_getActiveOrders_mapResults() {
         Order p1 = new Order(); p1.setId(300L);

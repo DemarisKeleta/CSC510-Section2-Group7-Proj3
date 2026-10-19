@@ -156,12 +156,20 @@ public class OrderController {
         return orderService.getCurrentUserUnfulfilledOrders();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'DRIVER')")
+    // a DRIVER may only update orders under their own username; ADMIN may update any -
+    // without this, any driver could pass a different driver's username and both
+    // reassign that driver's deliveries and credit/discredit their earnings (IDOR)
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('DRIVER') and @driverStatsAccess.isOwner(authentication, #updateOrderDto.username()))")
     @PostMapping("/{id}")
     public ResponseEntity<?> updateOrderStatus(@PathVariable("id") final Long id, @RequestBody UpdateOrderDto updateOrderDto){
         logger.info("Updating order status for order ID: {}", id);
-        final OrderDto updatedOrderDto = orderService.updateOrder(id, updateOrderDto.username(), updateOrderDto.status());
-        return ResponseEntity.ok(updatedOrderDto);
+        try {
+            final OrderDto updatedOrderDto = orderService.updateOrder(id, updateOrderDto.username(), updateOrderDto.status());
+            return ResponseEntity.ok(updatedOrderDto);
+        } catch (final IllegalArgumentException e) {
+            // invalid state transition (e.g. "Delivered" before "Picked Up") - a 400, not a crash
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'DRIVER')")

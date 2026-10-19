@@ -70,7 +70,14 @@ public class AuthServiceImpl implements AuthService {
             return ResponseEntity.badRequest().body( Map.of( "error", "Username must be between 3-50 characters" ) );
         }
         
+        // Role checks - a null role would NPE inside setCorrectRoles below, and an
+        // unrecognized role would otherwise silently save a permanently broken account
+        // (role="", which fails every hasRole check forever with no error ever shown)
         final String role = setCorrectRoles(req);
+        if ( role.isEmpty() ) {
+            logger.error("Invalid or missing role: " + req.role());
+            return ResponseEntity.badRequest().body( Map.of( "error", "Role must be one of: driver, customer, staff" ) );
+        }
         final String hash = passwordEncoder.encode( req.password() );
         final User hashedUser = new User( req, hash, role );
         userRepository.save( hashedUser );
@@ -95,6 +102,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private String setCorrectRoles(final RegisterRequestDto req){
+        // a missing role must fall through to "" (handled by the caller above) rather than NPE here
+        if(req.role() == null){
+            return "";
+        }
         if(req.role().toLowerCase().equals("driver")){
             return Roles.ROLE_DRIVER;
         }

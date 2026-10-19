@@ -61,6 +61,9 @@ public class OrderMapper {
         dto.setCost(order.getCost());
         dto.setStatus(order.getStatus());
         dto.setDeliveryCost(order.getDeliveryCost());
+        // same class of bug as the Food fields above: Order.rating exists on both the
+        // entity and this DTO but was never copied across, so it silently came back null
+        dto.setRating(order.getRating());
 
 //        dto.setDriverStats(DriverStatsMapper.mapToDriverStatsDto(order.getDriver()));
 

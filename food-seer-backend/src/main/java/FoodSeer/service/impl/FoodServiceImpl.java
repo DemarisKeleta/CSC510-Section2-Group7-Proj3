@@ -173,7 +173,19 @@ public class FoodServiceImpl implements FoodService {
         
         // Flush all pending changes to ensure join table is updated
         orderRepository.flush();
-        
+
+        // Remove the food from every Inventory's list too - Inventory.foods is a
+        // @OneToMany join table (inventory_foods) with no cascade/orphan-removal on
+        // delete, so a food still listed there would otherwise fail deleteFood below
+        // with a foreign-key constraint violation
+        final List<Inventory> inventoriesWithFood = inventoryRepository.findAll().stream()
+                .filter(inv -> inv.getFoods() != null && inv.getFoods().stream().anyMatch(f -> f.getId().equals(food.getId())))
+                .collect(Collectors.toList());
+        for (final Inventory inventory : inventoriesWithFood) {
+            inventory.getFoods().removeIf(f -> f.getId().equals(food.getId()));
+            inventoryRepository.saveAndFlush(inventory);
+        }
+
         // Now safe to delete the food
         foodRepository.delete( food );
     }
@@ -340,8 +352,10 @@ public class FoodServiceImpl implements FoodService {
             throw new IllegalStateException("You have already rated this food item for this order.");
         }
 
-        // 6. Fetch the Food
-        Food food = foodRepository.findById(foodId)
+        // 6. Fetch the Food - takes a row-level write lock (held for this transaction) so
+        // two concurrent ratings on the same food can't both read the same starting
+        // average and have one silently overwrite the other's contribution
+        Food food = foodRepository.findByIdForUpdate(foodId)
                 .orElseThrow(() -> new ResourceNotFoundException("Food not found with ID: " + foodId));
 
         // 7. THE MATH: Calculate new rolling average

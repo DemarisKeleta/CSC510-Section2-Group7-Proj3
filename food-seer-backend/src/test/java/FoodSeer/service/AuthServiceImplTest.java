@@ -161,6 +161,46 @@ public class AuthServiceImplTest {
         assertEquals("driverOne", ds.getUsername());
     }
 
+    /**
+     * An unrecognized role value must be rejected up front, not silently
+     * saved as a permanently broken account (role="").
+     */
+    @Test
+    void register_whenRoleUnrecognized_returnsBadRequest_andDoesNotSave() {
+        RegisterRequestDto req = mock(RegisterRequestDto.class);
+        when(req.username()).thenReturn("validUser");
+        when(req.password()).thenReturn("abc12345");
+        when(req.email()).thenReturn("validUser@example.com");
+        when(req.role()).thenReturn("admin"); // not one of driver/customer/staff
+        when(userRepository.existsByUsername("validUser")).thenReturn(false);
+
+        ResponseEntity<Map<String, String>> resp = authService.register(req);
+
+        assertEquals(400, resp.getStatusCodeValue());
+        assertTrue(resp.getBody().containsKey("error"));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    /**
+     * A missing role must produce a 400, not an NPE from
+     * setCorrectRoles's unguarded req.role().toLowerCase() call.
+     */
+    @Test
+    void register_whenRoleMissing_returnsBadRequest_insteadOfNpe() {
+        RegisterRequestDto req = mock(RegisterRequestDto.class);
+        when(req.username()).thenReturn("validUser");
+        when(req.password()).thenReturn("abc12345");
+        when(req.email()).thenReturn("validUser@example.com");
+        when(req.role()).thenReturn(null);
+        when(userRepository.existsByUsername("validUser")).thenReturn(false);
+
+        ResponseEntity<Map<String, String>> resp = authService.register(req);
+
+        assertEquals(400, resp.getStatusCodeValue());
+        assertTrue(resp.getBody().containsKey("error"));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
     @Test
     void login_whenAuthenticationFails_throwsBadCredentialsException() {
         LoginRequestDto req = mock(LoginRequestDto.class);
@@ -194,6 +234,11 @@ public class AuthServiceImplTest {
 
         // unknown/empty role should return empty string per implementation
         when(req.role()).thenReturn("unknownRole");
+        res = m.invoke(authService, req);
+        assertEquals("", res);
+
+        // a null role must also return empty string, not NPE on toLowerCase()
+        when(req.role()).thenReturn(null);
         res = m.invoke(authService, req);
         assertEquals("", res);
     }

@@ -271,19 +271,31 @@ public class OrderServiceImpl implements OrderService {
         }
 
         Order order = orderList.get();
-        order.setStatus(status);
 
         if(status.equals("Picked Up")){
             order.setDriver(DriverStatsMapper.mapToDriverStats(driverStatsService.getDriverStats(username)));
         }
 
-        if ((status.equals("Delivered")) && order.getDriver().getUsername().equals(username)) {
-            order.setIsFulfilled(true);
-            driverStatsService.updateTotalEarnings(username, order.getDeliveryCost());
+        if (status.equals("Delivered")) {
+            // the order must already have been picked up by this same driver - without this
+            // check, "Delivered" sent before any "Picked Up" NPEs on order.getDriver(), and a
+            // mismatched username would both credit the wrong driver and leave the order's
+            // status/isFulfilled flag contradicting each other
+            if (order.getDriver() == null || !order.getDriver().getUsername().equals(username)) {
+                throw new IllegalArgumentException(
+                        "Order " + orderId + " cannot be marked Delivered by " + username
+                                + ": it was not picked up by that driver");
+            }
+            // guard against a double-click/retry crediting the driver's earnings twice
+            if (!order.getIsFulfilled()) {
+                order.setIsFulfilled(true);
+                driverStatsService.updateTotalEarnings(username, order.getDeliveryCost());
+            }
         } else {
             order.setIsFulfilled(false);
         }
 
+        order.setStatus(status);
         orderRepository.save(order);
         return OrderMapper.mapToOrderDto(order);
     }
