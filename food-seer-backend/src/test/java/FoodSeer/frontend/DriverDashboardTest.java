@@ -6,6 +6,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -22,6 +23,7 @@ import FoodSeer.repositories.OrderRepository;
 import io.github.bonigarcia.wdm.WebDriverManager;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @AutoConfigureMockMvc
@@ -76,12 +78,14 @@ public class DriverDashboardTest {
      */
     @Test
     public void testDriverDashboardLoads() {
-        // Create and login as driver
-        registerDriver("testdriver", "driver@test.com", "password123");
-        loginAsDriver("testdriver", "password123");
+        // Create and login as driver. The username and email are used by no other
+        // test, so rows left in the shared test database by other test classes
+        // (OrderControllerTest saves a driver@test.com user) cannot block registration.
+        registerDriver("dashboarddriver", "dashboard@test.com", "password123");
+        loginAsDriver("dashboarddriver", "password123");
 
         // Wait for dashboard to load
-        wait.until(d -> d.getCurrentUrl().contains("driver"));
+        waitForUrl(url -> url.contains("driver"), "the driver dashboard after login");
 
         // Verify stats cards are present
         wait.until(ExpectedConditions.presenceOfElementLocated(By.className("dashboard-stats")));
@@ -354,12 +358,12 @@ public class DriverDashboardTest {
         driver.findElement(By.className("login-button")).click();
 
         // Wait for successful registration (redirect to login)
-        wait.until(d -> d.getCurrentUrl().equals("http://localhost:3000/"));
+        waitForUrl(url -> url.equals("http://localhost:3000/"), "the login page after registering " + username);
     }
 
     private void loginAsDriver(String username, String password) {
         driver.get(baseUrl);
-        wait.until(d -> d.getCurrentUrl().equals("http://localhost:3000/"));
+        waitForUrl(url -> url.equals("http://localhost:3000/"), "the login page");
 
         WebElement usernameField = driver.findElement(By.id("username"));
         WebElement passwordField = driver.findElement(By.id("password"));
@@ -368,5 +372,28 @@ public class DriverDashboardTest {
         usernameField.sendKeys(username);
         passwordField.sendKeys(password);
         loginButton.click();
+    }
+
+    /**
+     * Waits for the browser URL to meet a condition. On timeout it fails with the
+     * current URL and any error message shown on the page, so a CI failure says
+     * what went wrong instead of only naming a lambda.
+     *
+     * @param condition
+     *            test applied to the current URL
+     * @param expectation
+     *            what the test was waiting for, used in the failure message
+     */
+    private void waitForUrl(final Predicate<String> condition, final String expectation) {
+        try {
+            wait.until(d -> condition.test(d.getCurrentUrl()));
+        } catch (TimeoutException e) {
+            final StringBuilder errors = new StringBuilder();
+            for (final WebElement element : driver.findElements(By.className("error-message"))) {
+                errors.append(element.getText()).append(' ');
+            }
+            throw new AssertionError("Timed out waiting for " + expectation + ". Current URL: "
+                    + driver.getCurrentUrl() + ". Error text on page: '" + errors.toString().trim() + "'", e);
+        }
     }
 }

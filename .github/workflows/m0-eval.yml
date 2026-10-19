@@ -1,0 +1,57 @@
+name: M0 Eval
+
+# Runs the M0 risk-killer eval for the allergy trace-back feature and posts
+# its report to the job summary. This job fails whenever the claim fails
+# (alert recall below 0.95 or alert precision below 0.70).
+#
+# It runs on pushes to main and Development-2, on pull requests into main,
+# and on demand (Actions tab > M0 Eval > Run workflow). Feature branches
+# skip it so a red M0 check does not appear on every push.
+
+on:
+  push:
+    branches: [main, Development-2]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  m0-eval:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Run the M0 trace-back eval
+        working-directory: food-seer-backend
+        # Retry dependency downloads that Maven Central answers with 429/502/503/504.
+        # Only downloads are retried; a failing eval still fails the job once.
+        run: mvn -B -Daether.connector.http.retryHandler.count=5 -Daether.connector.http.retryHandler.serviceUnavailable=429,502,503,504 -Dtest=M0TraceEval -Dsurefire.failIfNoSpecifiedTests=false test
+
+      - name: Publish the M0 report to the job summary
+        if: always()
+        working-directory: food-seer-backend
+        run: |
+          if [ -f target/m0-eval/m0-report.md ]; then
+            cat target/m0-eval/m0-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No M0 report was produced." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload the M0 report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m0-eval-report
+          path: food-seer-backend/target/m0-eval/

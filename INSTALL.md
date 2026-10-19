@@ -37,41 +37,7 @@ This guide will help you set up and run the FoodSeer application.
 
 ## Dependencies 
 
-| Dependency                   | Version  | License                   | Required?    | URL                                                                                              |
-| ---------------------------- | -------- | ------------------------- | ------------ | ------------------------------------------------------------------------------------------------ |
-| Spring Boot Starter Web      | 3.1.4    | Apache-2.0                | ✅            | [https://spring.io/projects/spring-boot](https://spring.io/projects/spring-boot)                 |
-| Spring Boot Starter Security | 3.1.4    | Apache-2.0                | ✅            | [https://spring.io/projects/spring-security](https://spring.io/projects/spring-security)         |
-| Spring Boot Starter Data JPA | 3.1.4    | Apache-2.0                | ✅            | [https://spring.io/projects/spring-data-jpa](https://spring.io/projects/spring-data-jpa)         |
-| Jakarta Persistence API      | 3.1.0    | EPL-2.0                   | ✅            | [https://jakarta.ee/specifications/persistence/](https://jakarta.ee/specifications/persistence/) |
-| JSON Web Token (JJWT API)    | 0.11.5   | Apache-2.0                | ✅            | [https://github.com/jwtk/jjwt](https://github.com/jwtk/jjwt)                                     |
-| JJWT Impl (runtime)          | 0.11.5   | Apache-2.0                | ✅            | [https://github.com/jwtk/jjwt](https://github.com/jwtk/jjwt)                                     |
-| JJWT Jackson (runtime)       | 0.11.5   | Apache-2.0                | ✅            | [https://github.com/jwtk/jjwt](https://github.com/jwtk/jjwt)                                     |
-| org.json                     | 20210307 | JSON License              | ✅            | [https://github.com/stleary/JSON-java](https://github.com/stleary/JSON-java)                     |
-| MySQL Connector/J            | 8.4.0    | GPL-2.0 w/ FOSS Exception | ✅            | [https://dev.mysql.com](https://dev.mysql.com)                                                   |
-| Spring Boot Starter Test     | 3.1.4    | Apache-2.0                | ✅ (tests)    | [https://spring.io/projects/spring-boot](https://spring.io/projects/spring-boot)                 |
-| Spring Security Test         | 6.1.4    | Apache-2.0                | ✅ (tests)    | [https://spring.io/projects/spring-security](https://spring.io/projects/spring-security)         |
-| H2 Database                  | 2.2.224  | EPL-1.0                   | ✅ (tests)    | [https://www.h2database.com](https://www.h2database.com)                                         |
-| JUnit BOM                    | 5.11.0   | EPL-2.0                   | ✅ (tests)    | [https://junit.org](https://junit.org)                                                           |
-| JaCoCo                       | 0.8.11   | EPL-2.0                   | ✅ (coverage) | [https://www.jacoco.org](https://www.jacoco.org)                                                 |
-
-
-| Dependency                  | Version | License    | Required? | URL                                                                                          |
-| --------------------------- | ------- | ---------- | --------- | -------------------------------------------------------------------------------------------- |
-| React                       | 18.2.0  | MIT        | ✅         | [https://react.dev](https://react.dev)                                                       |
-| React DOM                   | 18.2.0  | MIT        | ✅         | [https://react.dev](https://react.dev)                                                       |
-| React Router DOM            | 6.3.0   | MIT        | ✅         | [https://reactrouter.com](https://reactrouter.com)                                           |
-| React Scripts (CRA)         | 5.0.1   | MIT        | ✅         | [https://github.com/facebook/create-react-app](https://github.com/facebook/create-react-app) |
-| Web Vitals                  | 2.1.4   | Apache-2.0 | Optional  | [https://web.dev/vitals](https://web.dev/vitals)                                             |
-| @testing-library/react      | 13.3.0  | MIT        | ✅ (tests) | [https://testing-library.com](https://testing-library.com)                                   |
-| @testing-library/jest-dom   | 5.16.4  | MIT        | ✅ (tests) | [https://testing-library.com](https://testing-library.com)                                   |
-| @testing-library/user-event | 13.5.0  | MIT        | ✅ (tests) | [https://testing-library.com](https://testing-library.com)                                   |
-
-
-| Tool               | Version | License                     | Required? | URL                                                        |
-| ------------------ | ------- | --------------------------- | --------- | ---------------------------------------------------------- |
-| Ollama             | latest  | MIT                         | ✅        | [https://ollama.com]                                      |
-| qwen2.5:1.5b Model | latest  | Apache License Version 2.0  | ✅        | [https://ollama.com/library/qwen2.5:1.5b]                 |
-
+Every library, its version, and its license are listed in [THIRD_PARTY_LIBRARIES.md](THIRD_PARTY_LIBRARIES.md).
 
 | Language | Tool         | Command                  |
 | -------- | ------------ | ------------------------ |

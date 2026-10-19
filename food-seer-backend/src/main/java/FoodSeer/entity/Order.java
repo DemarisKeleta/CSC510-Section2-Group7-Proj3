@@ -1,8 +1,7 @@
 package FoodSeer.entity;
 
 import java.math.BigDecimal;
-// Instant backs the new createdAt field below
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -55,33 +54,31 @@ public class Order {
     private BigDecimal deliveryCost;
 
     /**
-     * When this order was placed. Used to compute "calories consumed today"
-     * for the Fitness-Based Calorie Tracking feature - set once at creation,
-     * never updated afterward.
+     * When the order was placed. Used by the allergy trace-back feature to find
+     * orders placed inside an incident's time window. Orders saved before this
+     * field existed have no value, so callers must handle null.
      */
-    // no column annotation needed - plain Instant mapping is enough for ddl-auto=update to add the column
-
+  
     @Column(length = 1000)
     private String allergyRestrictions;
 
     public String getAllergyRestrictions() {
-        return allergyRestrictions;
+      return allergyRestrictions;
     }
 
     public void setAllergyRestrictions(String allergyRestrictions) {
-        this.allergyRestrictions = allergyRestrictions;
+      this.allergyRestrictions = allergyRestrictions;
     }
-    
+
+    @Column(name = "created_at")
     private Instant createdAt;
 
-    // getter used by CalorieBudgetServiceImpl to filter today's orders
     public Instant getCreatedAt() {
-        return createdAt;
+      return createdAt;
     }
 
-    // setter called once, from OrderServiceImpl.createOrder
     public void setCreatedAt(final Instant createdAt) {
-        this.createdAt = createdAt;
+       this.createdAt = createdAt;
     }
 
     public BigDecimal getCost() {
@@ -289,5 +286,34 @@ public class Order {
 
     public void setDeliveryCost(BigDecimal deliveryCost) {
         this.deliveryCost = deliveryCost;
+    }
+
+    /**
+     * Gets the time this order was placed.
+     *
+     * @return the creation time, or null for orders saved before this field existed
+     */
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    /**
+     * Sets the time this order was placed.
+     *
+     * @param createdAt the creation time
+     */
+    public void setCreatedAt(final LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    /**
+     * Fills in the creation time the first time the order is saved, unless a
+     * caller already set one (tests and simulations set their own).
+     */
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
     }
 }

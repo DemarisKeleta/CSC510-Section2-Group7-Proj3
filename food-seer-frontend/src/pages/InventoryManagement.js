@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllFoods, createFood, updateFood, deleteFood, getCurrentUser } from '../services/api';
+import { getAllFoods, createFood, updateFood, deleteFood, getCurrentUser, getAllergens } from '../services/api';
 
 const InventoryManagement = () => {
-  // Comprehensive list of allergens
-  const ALLERGEN_OPTIONS = [
-    'MILK', 'DAIRY', 'LACTOSE', 'EGGS', 'FISH', 'SHELLFISH',
-    'TREE-NUTS', 'PEANUTS', 'WHEAT', 'GLUTEN', 'SOY', 'SESAME',
-    'CORN', 'SULFITES', 'MUSTARD', 'MEAT', 'BEEF', 'PORK',
-    'POULTRY', 'GELATIN', 'CAFFEINE'
-  ];
-
   const [foods, setFoods] = useState([]);
+  // Shared, site-wide allergen list (same source Personal Diet and the
+  // onboarding quiz read from) - so staff can tag food with any allergen a
+  // customer has added, not just the original fixed set.
+  const [allergenOptions, setAllergenOptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingFood, setEditingFood] = useState(null);
@@ -49,6 +45,12 @@ const InventoryManagement = () => {
 
   useEffect(() => {
     fetchFoods();
+  }, []);
+
+  useEffect(() => {
+    getAllergens()
+      .then(setAllergenOptions)
+      .catch((error) => console.error('Error loading allergen list:', error));
   }, []);
 
   const handleInputChange = (e) => {
@@ -281,7 +283,7 @@ const InventoryManagement = () => {
             <div className="form-group">
               <label>Allergens (select all that apply)</label>
               <div className="allergens-grid">
-                {ALLERGEN_OPTIONS.map(allergen => (
+                {allergenOptions.map(allergen => (
                   <label key={allergen} className="allergen-checkbox">
                     <input
                       type="checkbox"
