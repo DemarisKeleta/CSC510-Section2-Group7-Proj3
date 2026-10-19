@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import FoodSeer.dto.DriverStatsDto;
 import FoodSeer.entity.DriverStats;
 import FoodSeer.mapper.DriverStatsMapper;
+import FoodSeer.service.AllergyHandoffService;
 import FoodSeer.service.DriverStatsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,10 @@ public class OrderServiceImpl implements OrderService {
     /** Repository for food items. */
     @Autowired
     private FoodRepository foodRepository;
+
+    /** Repository for allergy handoff */
+    @Autowired
+    private AllergyHandoffService allergyHandoffService;
 
     /** Repository for orders. */
     @Autowired
@@ -87,6 +92,7 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("No authenticated user found");
         }
         order.setUser(currentUser);
+        order.setAllergyRestrictions(currentUser.getDietaryRestrictions());
         
         final Order savedOrder = orderRepository.save(order);
         return OrderMapper.mapToOrderDto(savedOrder);
@@ -262,31 +268,98 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderDto updateOrder(final Long orderId, String username, String status){
-        Optional<Order> orderList = orderRepository.findById(orderId);
+    public OrderDto claimOrder(final Long orderId) {
+        final User currentUser = userService.getCurrentUser();
 
-        if(orderList.isEmpty()){
-            logger.info("Order with id {} does not exist", orderId);
-            return null;
+        if (currentUser == null
+                || !"ROLE_DRIVER".equals(currentUser.getRole())) {
+            throw new SecurityException("Only drivers can claim orders");
         }
 
-        Order order = orderList.get();
-        order.setStatus(status);
+        final Order order = orderRepository.findById(orderId)
+            .orElseThrow(() ->
+                    new ResourceNotFoundException(
+                            "Order does not exist with id " + orderId));
 
-        if(status.equals("Picked Up")){
-            order.setDriver(DriverStatsMapper.mapToDriverStats(driverStatsService.getDriverStats(username)));
+        if (!"Placed".equals(order.getStatus())
+                || order.getDriver() != null) {
+            throw new IllegalStateException(
+                "Order is not available to claim");
         }
 
-        if ((status.equals("Delivered")) && order.getDriver().getUsername().equals(username)) {
-            order.setIsFulfilled(true);
-            driverStatsService.updateTotalEarnings(username, order.getDeliveryCost());
-        } else {
-            order.setIsFulfilled(false);
-        }
+        order.setDriver(
+            DriverStatsMapper.mapToDriverStats(
+                    driverStatsService.getDriverStats(
+                            currentUser.getUsername())));
 
-        orderRepository.save(order);
-        return OrderMapper.mapToOrderDto(order);
+        order.setStatus("Claimed");
+
+        return OrderMapper.mapToOrderDto(orderRepository.save(order));
     }
+
+    @Override
+    public OrderDto updateOrder(final Long orderId, String username, String status) {
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() ->
+                    new ResourceNotFoundException(
+                            "Order not found: " + orderId));
+
+        User currentUser = userService.getCurrentUser();
+
+        if (currentUser == null
+                || !"ROLE_DRIVER".equals(currentUser.getRole())) {
+            throw new SecurityException("Only drivers can update delivery status");
+        }
+
+        String authenticatedUsername = currentUser.getUsername();
+
+        if (order.getDriver() == null
+                || !authenticatedUsername.equals(order.getDriver().getUsername())) {
+            throw new SecurityException("You are not assigned to this order");
+        }
+
+        if ("Picked Up".equals(status)) {
+            if (!"Claimed".equals(order.getStatus())) {
+                throw new IllegalStateException("Order must be claimed before pickup");
+            }
+
+            boolean hasRestrictions =
+                order.getAllergyRestrictions() != null
+                && !order.getAllergyRestrictions().isBlank();
+
+            if (hasRestrictions) {
+                if (!allergyHandoffService.isAcknowledged(orderId, "STAFF")) {
+                    throw new IllegalStateException(
+                        "Restaurant staff must acknowledge allergy warning first");
+                }
+
+                if (!allergyHandoffService.isAcknowledged(orderId, "DRIVER")) {
+                    throw new IllegalStateException(
+                        "Driver must acknowledge allergy warning before pickup");
+                    }
+                }
+
+                order.setStatus("Picked Up");
+
+            } else if ("Delivered".equals(status)) {
+                if (!"Picked Up".equals(order.getStatus())) {
+                    throw new IllegalStateException(
+                        "Order must be picked up before delivery");
+                }
+
+                order.setStatus("Delivered");
+                order.setIsFulfilled(true);
+
+                driverStatsService.updateTotalEarnings(
+                    authenticatedUsername, order.getDeliveryCost());
+
+            } else {
+                throw new IllegalArgumentException("Invalid delivery status");
+            }
+
+            orderRepository.save(order);
+            return OrderMapper.mapToOrderDto(order);
+        }
 
     @Override
     public List<OrderDto> getAvailableOrders(){
@@ -295,8 +368,15 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderDto> getActiveOrders(String username){
-        List<Order> activeOrders = orderRepository.findByDriverUsernameAndStatus(username, "Picked Up");
-        return activeOrders.stream().map(OrderMapper::mapToOrderDto).collect(Collectors.toList());
+    public List<OrderDto> getActiveOrders(String username) {
+        List<Order> activeOrders =
+            orderRepository.findByDriverUsernameAndStatusIn(
+                username,
+                List.of("Claimed", "Picked Up")
+            );
+
+        return activeOrders.stream()
+            .map(OrderMapper::mapToOrderDto)
+            .collect(Collectors.toList());
     }
 }

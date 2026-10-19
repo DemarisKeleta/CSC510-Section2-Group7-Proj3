@@ -244,10 +244,14 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void updateOrder_whenNotFound_returnsNull() {
+    void updateOrder_whenNotFound_throwsException() {
         when(orderRepository.findById(999L)).thenReturn(Optional.empty());
-        OrderDto res = orderService.updateOrder(999L, "any", "Picked Up");
-        assertNull(res);
+
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> orderService.updateOrder(999L, "any", "Picked Up")
+        );
+
         verify(orderRepository, never()).save(any());
     }
 
@@ -296,6 +300,11 @@ class OrderServiceImplTest {
 
         when(orderRepository.findById(201L)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+        User currentUser = new User();
+        currentUser.setUsername("driverB");
+        currentUser.setRole("ROLE_DRIVER");
+
+        when(userService.getCurrentUser()).thenReturn(currentUser);
 
         OrderDto dto = orderService.updateOrder(201L, "driverB", "Delivered");
 
@@ -313,7 +322,10 @@ class OrderServiceImplTest {
         when(orderRepository.findByStatus("Placed")).thenReturn(List.of(p1));
 
         Order active = new Order(); active.setId(301L);
-        when(orderRepository.findByDriverUsernameAndStatus("drv", "Picked Up")).thenReturn(List.of(active));
+        when(orderRepository.findByDriverUsernameAndStatusIn(
+            eq("drv"),
+            eq(List.of("Claimed", "Picked Up"))
+        )).thenReturn(List.of(active));
 
         try (MockedStatic<OrderMapper> mocked = mockStatic(OrderMapper.class)) {
             mocked.when(() -> OrderMapper.mapToOrderDto(p1)).thenReturn(new OrderDto(300L, "Placed"));

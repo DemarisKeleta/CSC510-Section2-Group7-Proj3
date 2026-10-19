@@ -59,19 +59,30 @@ const DietaryRestrictions = ({ restrictions, onUpdate, onNext, onPrevious, canGo
       
       <div className="allergens-scroll-container">
         <div className="allergens-selection-grid">
-          {allergenOptions.map((option) => (
-            <label
-              key={option}
-              className={`allergen-option ${selectedRestrictions.includes(option) ? 'selected' : ''}`}
-            >
-              <input
-                type="checkbox"
-                checked={selectedRestrictions.includes(option)}
-                onChange={() => handleRestrictionChange(option)}
+          {allergenOptions.map((option) => {
+            const value = typeof option === 'string' ? option : option.value;
+            const label = value === 'MILK'
+              ? 'Milk/Dairy'
+              : value === 'MEAT'
+                ? 'Meat (All)'
+                : value === 'TREE-NUTS'
+                  ? 'Tree Nuts'
+                  : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+
+            return (
+              <label
+                key={value}
+                className={`allergen-option ${selectedRestrictions.includes(value) ? 'selected' : ''}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedRestrictions.includes(value)}
+                  onChange={() => handleRestrictionChange(value)}
               />
-              <span>{option}</span>
+              <span>{label}</span>
             </label>
-          ))}
+          );
+        })}
         </div>
       </div>
 

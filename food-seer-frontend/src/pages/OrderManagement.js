@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUnfulfilledOrders, getFulfilledOrders, fulfillOrder, getCurrentUser } from '../services/api';
+import {
+  getUnfulfilledOrders,
+  getFulfilledOrders,
+  fulfillOrder,
+  getCurrentUser,
+  acknowledgeAllergyHandoff,
+  getAllergyHandoffStatus
+} from '../services/api';
 
 const OrderManagement = () => {
   const [unfulfilledOrders, setUnfulfilledOrders] = useState([]);
@@ -8,6 +15,7 @@ const OrderManagement = () => {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('unfulfilled'); // unfulfilled or fulfilled
   const [processing, setProcessing] = useState({});
+  const [allergyStatus, setAllergyStatus] = useState({});
   const navigate = useNavigate();
 
   const fetchOrders = async () => {
@@ -22,8 +30,31 @@ const OrderManagement = () => {
 
       const unfulfilled = await getUnfulfilledOrders();
       const fulfilled = await getFulfilledOrders();
+
       setUnfulfilledOrders(unfulfilled);
       setFulfilledOrders(fulfilled);
+
+      // Retrieve acknowledgment status for orders with dietary restrictions.
+      if (user.role === 'ROLE_STAFF') {
+        const statusEntries = await Promise.all(
+          unfulfilled
+            .filter(order => order.allergyRestrictions?.trim())
+            .map(async order => {
+              try {
+                const status = await getAllergyHandoffStatus(order.id);
+                return [order.id, status];
+              } catch (error) {
+                console.error(
+                  `Failed to load allergy status for order ${order.id}:`,
+                    error
+                );
+                return [order.id, null];
+              }
+            })
+          );
+
+          setAllergyStatus(Object.fromEntries(statusEntries));
+        }
     } catch (error) {
       console.error('Error fetching orders:', error);
       navigate('/');
@@ -35,6 +66,21 @@ const OrderManagement = () => {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  const handleAcknowledgeAllergy = async (orderId) => {
+  setProcessing(prev => ({ ...prev, [orderId]: true }));
+
+  try {
+    await acknowledgeAllergyHandoff(orderId);
+    alert('Allergy warning acknowledged successfully!');
+    await fetchOrders();
+  } catch (error) {
+    console.error('Allergy acknowledgment failed:', error);
+    alert(error.message || 'Failed to acknowledge allergy warning.');
+  } finally {
+    setProcessing(prev => ({ ...prev, [orderId]: false }));
+  }
+};
 
   const handleFulfillOrder = async (orderId) => {
     if (!window.confirm('Mark this order as fulfilled?')) return;
@@ -143,6 +189,37 @@ const OrderManagement = () => {
                   <span className="value">${getTotalPrice(order)}</span>
                 </div>
               </div>
+
+              {view === 'unfulfilled' && order.allergyRestrictions?.trim() && (
+                <div className="allergy-handoff-warning">
+                  <h4>Dietary Restriction Warning</h4>
+
+                  <p>
+                    <strong>Customer restrictions:</strong>{' '}
+                    {order.allergyRestrictions}
+                  </p>
+
+                  {allergyStatus[order.id]?.staffAcknowledged ? (
+                    <p className="allergy-acknowledged">
+                      ✓ Restaurant allergy warning acknowledged
+                    </p>
+                  ) : allergyStatus[order.id] === undefined ? (
+  <p>Checking acknowledgment status...</p>
+                  ) : allergyStatus[order.id] === null ? (
+                    <p>Unable to verify acknowledgment status. Please refresh.</p>
+                  ) : (
+                    <button
+                      className="fulfill-button"
+                      onClick={() => handleAcknowledgeAllergy(order.id)}
+                      disabled={processing[order.id]}
+                    >
+                      {processing[order.id]
+                        ? 'Processing...'
+                        : 'Acknowledge Allergy Warning'}
+                    </button>
+                  )}
+                  </div>
+                )}
 
               <div className="order-items-detail">
                 <h4>Order Items:</h4>

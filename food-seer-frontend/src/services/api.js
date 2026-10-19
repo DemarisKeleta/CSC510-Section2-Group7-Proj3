@@ -632,6 +632,54 @@ export const fetchDriverDashboard = async (user) => {
   return await response.json();
 };
 
+export const acknowledgeAllergyHandoff = async (orderId) => {
+  const response = await fetch(
+    `${API_BASE_URL}/api/orders/${orderId}/allergy-handoff/acknowledge`,
+    {
+      method: "POST",
+      headers: createHeaders(true),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to acknowledge allergy warning");
+  }
+
+  return await response.json();
+};
+
+export const getAllergyHandoffStatus = async (orderId) => {
+  const response = await fetch(
+    `${API_BASE_URL}/api/orders/${orderId}/allergy-handoff/status`,
+    {
+      method: "GET",
+      headers: createHeaders(true),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to fetch allergy handoff status");
+  }
+
+  return await response.json();
+};
+
+export const claimOrder = async (orderId) => {
+  const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}/claim`, {
+    method: "POST",
+    headers: createHeaders(true),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to claim order");
+  }
+
+  return await response.json();
+};
+
 export const updateOrderStatus = async (orderId, status, username) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {

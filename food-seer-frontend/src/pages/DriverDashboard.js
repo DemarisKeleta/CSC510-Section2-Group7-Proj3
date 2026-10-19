@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import {fetchDriverDashboard, getCurrentUser, getAvailableOrders, getActiveOrders, updateOrderStatus, getUnfulfilledOrders } from "../services/api";
+import {
+  fetchDriverDashboard,
+  getCurrentUser,
+  getAvailableOrders,
+  getActiveOrders,
+  updateOrderStatus,
+  claimOrder,
+  acknowledgeAllergyHandoff,
+  getAllergyHandoffStatus
+} from "../services/api";
 
 const DriverDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -7,6 +16,7 @@ const DriverDashboard = () => {
   const [activeOrders, setActiveOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [allergyStatus, setAllergyStatus] = useState({});
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -26,6 +36,27 @@ const DriverDashboard = () => {
         setStats(dashboardStats);
         setAvailableOrders(available);
         setActiveOrders(active);
+
+        // Load allergy acknowledgment statuses for assigned orders.
+        const statusEntries = await Promise.all(
+          active
+            .filter(order => order.allergyRestrictions?.trim())
+            .map(async order => {
+              try {
+                const status = await getAllergyHandoffStatus(order.id);
+                return [order.id, status];
+              } catch (err) {
+                console.error(
+                  `Failed to load allergy status for order ${order.id}:`,
+                  err
+                );
+                return [order.id, null];
+              }
+            })
+        );
+
+setAllergyStatus(Object.fromEntries(statusEntries));
+
       } catch (err) {
         console.error(err);
         setError("Failed to load dashboard data.");
@@ -36,6 +67,26 @@ const DriverDashboard = () => {
 
     loadDashboard();
   }, []);
+
+  const handleClaim = async (orderId) => {
+  try {
+    await claimOrder(orderId);
+    window.location.reload();
+  } catch (err) {
+    console.error(err);
+    setError(err.message || "Failed to claim order.");
+  }
+};
+
+const handleAcknowledge = async (orderId) => {
+  try {
+    await acknowledgeAllergyHandoff(orderId);
+    window.location.reload();
+  } catch (err) {
+    console.error(err);
+    setError(err.message || "Failed to acknowledge allergy warning.");
+  }
+};
 
   const handlePickUp = async (orderId) => {
     try {
@@ -48,7 +99,7 @@ const DriverDashboard = () => {
 
     } catch (err) {
       console.error(err);
-      setError("Failed to pick up order.");
+      alert(err.message || "Failed to pick up order.");
     }
   };
 
@@ -112,7 +163,7 @@ const DriverDashboard = () => {
                         <div className="order-header">
                           <h3>Order #{order.id}</h3>
                           <span className="status-badge active">
-                            PICKED UP
+                            {order.status === "Claimed" ? "CLAIMED" : "PICKED UP"}
                           </span>
                         </div>
 
@@ -123,12 +174,55 @@ const DriverDashboard = () => {
                           </div>
                         </div>
 
-                        <button
-                          className="fulfill-button"
-                          onClick={() => handleDeliver(order.id)}
-                        >
-                          Mark as Delivered
-                        </button>
+                        {order.status === "Claimed" ? (
+                          <div>
+                            {order.allergyRestrictions?.trim() ? (
+                              <>
+                                <p>
+                                  <strong>Dietary restrictions:</strong>{" "}
+                                  {order.allergyRestrictions}
+                                </p>
+
+                                <p>
+                                  Restaurant staff and driver acknowledgment are required before pickup.
+                                </p>
+
+                                {allergyStatus[order.id]?.driverAcknowledged ? (
+                                  <p>✓ Driver allergy warning acknowledged</p>
+                                ) : allergyStatus[order.id] === undefined ? (
+                                  <p>Checking acknowledgment status...</p>
+                                ) : allergyStatus[order.id] === null ? (
+                                  <p>Unable to verify acknowledgment status. Please refresh.</p>
+                                ) : !allergyStatus[order.id].staffAcknowledged ? (
+                                  <p>Waiting for restaurant staff to acknowledge the allergy warning.</p>
+                                ) : (
+                                  <button
+                                    className="fulfill-button"
+                                    onClick={() => handleAcknowledge(order.id)}
+                                  >
+                                    Acknowledge Allergy Warning
+                                    </button>
+                                  )}
+                              </>
+                            ) : (
+                              <p>No dietary restrictions recorded.</p>
+                            )}
+
+                            <button
+                              className="fulfill-button"
+                              onClick={() => handlePickUp(order.id)}
+                            >
+                              Pick Up Order
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            className="fulfill-button"
+                            onClick={() => handleDeliver(order.id)}
+                          >
+                            Mark as Delivered
+                          </button>
+                        )}
 
                       </div>
                     ))
@@ -167,9 +261,9 @@ const DriverDashboard = () => {
 
                       <button
                         className="fulfill-button"
-                        onClick={() => handlePickUp(order.id)}
+                        onClick={() => handleClaim(order.id)}
                       >
-                        Pick Up
+                        Claim Order
                       </button>
 
                     </div>
