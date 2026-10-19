@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.time.Instant;
 
 import jakarta.persistence.*;
 
@@ -59,6 +58,9 @@ public class Order {
      * orders placed inside an incident's time window. Orders saved before this
      * field existed have no value, so callers must handle null.
      */
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
   
     @Column(length = 1000)
     private String allergyRestrictions;
@@ -69,17 +71,6 @@ public class Order {
 
     public void setAllergyRestrictions(String allergyRestrictions) {
       this.allergyRestrictions = allergyRestrictions;
-    }
-
-    @Column(name = "created_at")
-    private Instant createdAt;
-
-    public Instant getCreatedAt() {
-      return createdAt;
-    }
-
-    public void setCreatedAt(final Instant createdAt) {
-       this.createdAt = createdAt;
     }
 
     public BigDecimal getCost() {
