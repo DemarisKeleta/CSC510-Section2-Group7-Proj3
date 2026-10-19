@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "FoodSeer: Smart Meal Recommendation System"
+abstract: "A full-stack meal recommendation and ordering platform built for CSC510, combining AI-assisted recommendations, dietary/allergy-aware filtering, fitness-based calorie tracking, and allergy incident trace-back."
+type: software
+license: MIT
+repository-code: "https://github.com/grenzerc/CSC510-Section2-Group7-Proj3"
+authors:
+  - given-names: Rishabh
+    family-names: Ravi Kumar
+  - given-names: Rishi
+    family-names: Senthil Kumar
+  - given-names: Jagadeshwar
+    family-names: Muthukumaran
+  - given-names: Krisha
+    family-names: Darji
+  - given-names: Demaris
+    family-names: Keleta
+  - given-names: Mukul
+    family-names: Sauhta
+  - given-names: Justin
+    family-names: Kuethe
+  - given-names: Andrew
+    family-names: Parr
+  - name: neelansp
+  - name: Tringram1
+  - name: jcgoins2
