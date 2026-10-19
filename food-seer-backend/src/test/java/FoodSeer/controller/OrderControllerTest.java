@@ -349,6 +349,7 @@ class OrderControllerTest {
     void testGetActiveOrders_ForDriver() throws Exception {
         final List<Food> foods = foodRepository.findAll();
         final OrderDto orderDto = new OrderDto(0L, "ActiveOrderTest");
+        orderDto.setStatus("Placed");
         orderDto.setFoods(foods.subList(0, 1));
         final OrderDto saved = orderService.createOrder(orderDto);
         orderService.claimOrder(saved.getId());
@@ -366,6 +367,7 @@ class OrderControllerTest {
     void testUpdateOrderStatus_AsDriver() throws Exception {
         final List<Food> foods = foodRepository.findAll();
         final OrderDto orderDto = new OrderDto(0L, "UpdateStatusTest");
+        orderDto.setStatus("Placed");
         orderDto.setFoods(foods.subList(0, 1));
         final OrderDto saved = orderService.createOrder(orderDto);
         orderService.claimOrder(saved.getId());
