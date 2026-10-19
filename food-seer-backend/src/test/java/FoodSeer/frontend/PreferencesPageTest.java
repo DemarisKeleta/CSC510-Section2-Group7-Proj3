@@ -83,6 +83,11 @@ public class PreferencesPageTest {
 
         // Select dietary restrictions using new allergen system
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//label[contains(@class, 'allergen-option')]")));
+        System.out.println("ALLERGEN LABELS: " +
+            driver.findElements(By.cssSelector("label.allergen-option"))
+                .stream()
+                .map(WebElement::getText)
+                .toList());
         driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='Gluten']]")).click();
         driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='Milk/Dairy']]")).click();
 
