@@ -22,6 +22,7 @@ import FoodSeer.dto.InventoryDto;
 import FoodSeer.dto.OrderDto;
 import FoodSeer.entity.Food;
 import FoodSeer.entity.User;
+import FoodSeer.entity.DriverStats;
 import FoodSeer.repositories.FoodRepository;
 // needed so setUp() below can clear meal_logs before deleting users, avoiding an FK-constraint failure
 import FoodSeer.repositories.MealLogRepository;
@@ -29,6 +30,7 @@ import FoodSeer.repositories.OrderRepository;
 import FoodSeer.repositories.UserRepository;
 import FoodSeer.service.InventoryService;
 import FoodSeer.service.OrderService;
+import FoodSeer.repositories.DriverStatsRepository;
 
 /**
  * Tests Controller for API endpoints for an Order.
@@ -65,6 +67,10 @@ class OrderControllerTest {
     // needed to clear meal_logs below before userRepository.deleteAll() runs
     @Autowired
     private MealLogRepository mealLogRepository;
+    
+    /** Repository for driver stats */
+    @Autowired
+    private DriverStatsRepository driverStatsRepository;
 
     /**
      * Sets up test case by clearing repositories and creating sample data.
@@ -72,6 +78,7 @@ class OrderControllerTest {
     @BeforeEach
     public void setUp() throws Exception {
         orderRepository.deleteAll();
+        driverStatsRepository.deleteAll();
         // clear meal_logs before users, same reasoning as orders above: its FK blocks user deletion otherwise
         mealLogRepository.deleteAll();
         foodRepository.deleteAll();
@@ -101,6 +108,9 @@ class OrderControllerTest {
                 .role("ROLE_DRIVER")
                 .build();
         userRepository.save(driver);
+        final DriverStats driverStats = new DriverStats();
+        driverStats.setUsername("driver");
+        driverStatsRepository.save(driverStats);
 
         // Create initial inventory
         final List<Food> foods = new ArrayList<>();
@@ -341,9 +351,10 @@ class OrderControllerTest {
         final OrderDto orderDto = new OrderDto(0L, "ActiveOrderTest");
         orderDto.setFoods(foods.subList(0, 1));
         final OrderDto saved = orderService.createOrder(orderDto);
+        orderService.claimOrder(saved.getId());
 
         // Mark order as picked up by driver via service so it appears as active
-        orderService.updateOrder(saved.getId(), "driver", "PICKED_UP");
+        orderService.updateOrder(saved.getId(), "driver", "Picked Up");
 
         mvc.perform(get("/api/orders/activeOrders/driver"))
                 .andExpect(status().isOk());
@@ -357,9 +368,10 @@ class OrderControllerTest {
         final OrderDto orderDto = new OrderDto(0L, "UpdateStatusTest");
         orderDto.setFoods(foods.subList(0, 1));
         final OrderDto saved = orderService.createOrder(orderDto);
+        orderService.claimOrder(saved.getId());
 
         // Send update payload (username + status)
-        String payload = "{\"username\":\"driver\",\"status\":\"PICKED_UP\"}";
+        String payload = "{\"username\":\"driver\",\"status\":\"Picked Up\"}";
 
         mvc.perform(post("/api/orders/" + saved.getId())
                         .contentType(MediaType.APPLICATION_JSON)
