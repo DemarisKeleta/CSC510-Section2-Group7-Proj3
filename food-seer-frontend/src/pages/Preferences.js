@@ -10,6 +10,9 @@ function Preferences() {
     budget: '',
     dietaryRestrictions: []
   });
+  // the user's existing daily calorie goal (set on Personal Diet), carried through
+  // on save below so finishing this quiz doesn't wipe it back to null
+  const [dailyCalorieGoal, setDailyCalorieGoal] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -39,6 +42,8 @@ function Preferences() {
             dietaryRestrictions: dietaryArray
           });
         }
+        // always capture the existing goal, independent of the costPreference/dietaryRestrictions check above
+        setDailyCalorieGoal(user.dailyCalorieGoal ?? null);
       } catch (error) {
         console.error('❌ Error loading preferences:', error);
         // If error, just show empty form
@@ -82,8 +87,9 @@ function Preferences() {
         dietaryRestrictionsArray: quizData.dietaryRestrictions
       });
 
-      // Save preferences to backend
-      await updateUserPreferences(costPreference, dietaryRestrictions);
+      // Save preferences to backend - pass the existing calorie goal through so this
+      // quiz (which has no calorie-goal step of its own) doesn't overwrite it with null
+      await updateUserPreferences(costPreference, dietaryRestrictions, dailyCalorieGoal);
       
       console.log('✅ Preferences saved successfully!');
 

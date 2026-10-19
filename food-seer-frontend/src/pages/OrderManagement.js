@@ -53,7 +53,12 @@ const OrderManagement = () => {
     }
   };
 
-  const getTotalPrice = (order) => order.foods.reduce((total, food) => total + food.price, 0);
+  // order.cost already includes the delivery fee (set when the order was placed);
+  // only fall back to summing food prices for an older order that has no stored cost
+  const getTotalPrice = (order) =>
+    order.cost !== undefined && order.cost !== null
+      ? order.cost
+      : order.foods.reduce((total, food) => total + food.price, 0);
 
   if (loading) return <div className="staff-dashboard-container"><div className="loading">Loading orders...</div></div>;
 

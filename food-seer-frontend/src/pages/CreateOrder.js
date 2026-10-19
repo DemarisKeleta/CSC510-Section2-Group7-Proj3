@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getAllFoods, createOrder, getCurrentUser } from '../services/api';
 
@@ -12,6 +12,11 @@ const CreateOrder = () => {
   const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  // tracks which addToCart hand-off object has already been applied, so this effect
+  // re-running (e.g. when `foods` updates a second time under StrictMode) doesn't add
+  // the same item twice - window.history.replaceState below does NOT clear React
+  // Router's own location.state, so without this the same state keeps re-triggering it
+  const processedAddToCartRef = useRef(null);
 
   useEffect(() => {
     const fetchFoods = async () => {
@@ -33,6 +38,12 @@ const CreateOrder = () => {
   // Handle a single food item handed off from the chatbot's recommendation.
   useEffect(() => {
     if (location.state?.addToCart && foods.length > 0) {
+      // skip if this exact hand-off was already applied (see ref comment above)
+      if (processedAddToCartRef.current === location.state.addToCart) {
+        return;
+      }
+      processedAddToCartRef.current = location.state.addToCart;
+
       const recommendedFood = location.state.addToCart;
       const foodInStock = foods.find(f => f.id === recommendedFood.id);
 

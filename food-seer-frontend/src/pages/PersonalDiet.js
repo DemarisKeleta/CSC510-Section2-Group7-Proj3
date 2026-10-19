@@ -181,17 +181,26 @@ const PersonalDiet = () => {
   const excludedForAllergies = (recommendation?.foods?.length || 0) - allergyFreeFoods.length;
 
   const handleAddToCart = (food) => {
-    setCart((prev) => ({
-      ...prev,
-      [food.id]: { food, quantity: (prev[food.id]?.quantity || 0) + 1 }
-    }));
+    setCart((prev) => {
+      const currentQuantity = prev[food.id]?.quantity || 0;
+      // never let the cart quantity exceed what's actually in stock, even if
+      // this is called twice in a row (e.g. clicking both the card and the button)
+      if (currentQuantity >= food.amount) {
+        return prev;
+      }
+      return { ...prev, [food.id]: { food, quantity: currentQuantity + 1 } };
+    });
   };
 
   const handleIncrementCartItem = (food) => {
-    setCart((prev) => ({
-      ...prev,
-      [food.id]: { food, quantity: (prev[food.id]?.quantity || 0) + 1 }
-    }));
+    setCart((prev) => {
+      const currentQuantity = prev[food.id]?.quantity || 0;
+      // same stock cap as handleAddToCart above
+      if (currentQuantity >= food.amount) {
+        return prev;
+      }
+      return { ...prev, [food.id]: { food, quantity: currentQuantity + 1 } };
+    });
   };
 
   const handleDecrementCartItem = (foodId) => {

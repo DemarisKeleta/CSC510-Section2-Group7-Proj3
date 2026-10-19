@@ -87,6 +87,11 @@ const Orders = () => {
   };
 
   const getTotalPrice = (order) => {
+    // order.cost already includes the delivery fee (set when the order was placed);
+    // only fall back to summing food prices for an older order that has no stored cost
+    if (order.cost !== undefined && order.cost !== null) {
+      return order.cost;
+    }
     return order.foods.reduce((total, food) => total + food.price, 0);
   };
 
