@@ -366,4 +366,27 @@ class OrderControllerTest {
                         .content(payload))
                 .andExpect(status().isOk());
     }
+
+    /**
+     * A driver must not be able to update an order using a DIFFERENT
+     * driver's username in the request body (IDOR) - this would otherwise
+     * let any driver reassign or credit/discredit another driver's deliveries.
+     */
+    @Test
+    @Transactional
+    @WithMockUser(username = "driver", roles = "DRIVER")
+    void testUpdateOrderStatus_MismatchedUsername_isForbidden() throws Exception {
+        final List<Food> foods = foodRepository.findAll();
+        final OrderDto orderDto = new OrderDto(0L, "IdorTest");
+        orderDto.setFoods(foods.subList(0, 1));
+        final OrderDto saved = orderService.createOrder(orderDto);
+
+        // authenticated as "driver" but the body names a different driver
+        final String payload = "{\"username\":\"someOtherDriver\",\"status\":\"Picked Up\"}";
+
+        mvc.perform(post("/api/orders/" + saved.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isForbidden());
+    }
 }

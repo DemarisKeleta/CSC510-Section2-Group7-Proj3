@@ -107,6 +107,19 @@ public class OrderMapperTest {
         assertEquals(0, dto.getFoods().get(0).getAllergies().size());
     }
 
+    /**
+     * mapToOrderDto must carry Order.rating through to the DTO, the same as
+     * it already does for cost/status/deliveryCost - it was previously
+     * silently dropped, the same bug class as the Food fields fixed earlier.
+     */
+    @Test
+    public void testMapToOrderDto_CarriesRatingThrough() {
+        // order.rating is set to 4.8 in setUp()
+        final OrderDto dto = OrderMapper.mapToOrderDto(order);
+
+        assertEquals(new BigDecimal("4.8"), dto.getRating());
+    }
+
     @Test
     public void testOrder_RatingHelperMethods() {
         assertTrue(order.hasFoodBeenRated(1L));

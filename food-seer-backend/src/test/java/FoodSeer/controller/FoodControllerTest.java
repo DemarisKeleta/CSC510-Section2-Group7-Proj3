@@ -232,4 +232,39 @@ public class FoodControllerTest {
         mvc.perform(get("/api/foods/withinCalorieBudget"))
                 .andExpect(status().isUnauthorized());
     }
+
+    // --- Menu-editing endpoints must be staff/admin only ---
+
+    /** A plain customer must not be able to create menu items. */
+    @Test
+    @WithMockUser(username = "customer", roles = "CUSTOMER")
+    void testCreateFood_asCustomer_isForbidden() throws Exception {
+        final FoodDto food = new FoodDto("HACKED_FOOD", 5, 3, Arrays.asList("NONE"));
+
+        mvc.perform(post("/api/foods")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestUtils.asJsonString(food)))
+                .andExpect(status().isForbidden());
+    }
+
+    /** A plain customer must not be able to edit menu items. */
+    @Test
+    @WithMockUser(username = "customer", roles = "CUSTOMER")
+    void testUpdateFood_asCustomer_isForbidden() throws Exception {
+        final FoodDto update = new FoodDto("ANY_FOOD", 5, 3, Arrays.asList("NONE"));
+
+        mvc.perform(post("/api/foods/updateFood")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestUtils.asJsonString(update)))
+                .andExpect(status().isForbidden());
+    }
+
+    /** A plain customer must not be able to delete menu items. */
+    @Test
+    @WithMockUser(username = "customer", roles = "CUSTOMER")
+    void testDeleteFood_asCustomer_isForbidden() throws Exception {
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .delete("/api/foods/1"))
+                .andExpect(status().isForbidden());
+    }
 }
