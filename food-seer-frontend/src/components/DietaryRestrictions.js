@@ -61,15 +61,15 @@ const DietaryRestrictions = ({ restrictions, onUpdate, onNext, onPrevious, canGo
         <div className="allergens-selection-grid">
           {allergenOptions.map((option) => (
             <label
-              key={option}
-              className={`allergen-option ${selectedRestrictions.includes(option) ? 'selected' : ''}`}
+              key={option.value}
+              className={`allergen-option ${selectedRestrictions.includes(option.value) ? 'selected' : ''}`}
             >
               <input
                 type="checkbox"
-                checked={selectedRestrictions.includes(option)}
-                onChange={() => handleRestrictionChange(option)}
+                checked={selectedRestrictions.includes(option.value)}
+                onChange={() => handleRestrictionChange(option.value)}
               />
-              <span>{option}</span>
+              <span>{option.label}</span>
             </label>
           ))}
         </div>
