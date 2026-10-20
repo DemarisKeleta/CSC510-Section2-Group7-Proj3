@@ -35,6 +35,10 @@ public class FoodServiceImplTest {
     @BeforeEach
     void setUp() {
         entityManager.createNativeQuery("DELETE FROM orders_foods").executeUpdate();
+        // also clear Inventory's join table - DataInitializer seeds a real Inventory row
+        // containing real Food rows at app startup, so without this, deleteAll() below
+        // fails with a foreign-key violation on inventory_foods for any seeded food
+        entityManager.createNativeQuery("DELETE FROM inventory_foods").executeUpdate();
         foodRepository.deleteAll();
     }
 

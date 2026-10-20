@@ -46,6 +46,9 @@ public class InventoryRepositoryTest {
     @BeforeEach
     public void setUp() throws Exception {
         final EntityManager entityManager = testEntityManager.getEntityManager();
+        // inventory_foods rows must go first - they hold a foreign key onto inventory.id,
+        // so deleting inventory directly while they still exist violates that constraint
+        entityManager.createNativeQuery("DELETE FROM inventory_foods").executeUpdate();
         final Query query = entityManager.createNativeQuery("DELETE FROM inventory");
         query.executeUpdate();
 
