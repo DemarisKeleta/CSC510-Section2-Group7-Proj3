@@ -19,11 +19,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import FoodSeer.entity.User;
 import FoodSeer.repositories.FoodRepository;
+// cleared below before foods/users, since Order rows hold foreign keys onto both
+import FoodSeer.repositories.OrderRepository;
+// also cleared before users below, since it holds a foreign key onto user_id too
+import FoodSeer.repositories.MealLogRepository;
 import FoodSeer.repositories.UserRepository;
 import FoodSeer.service.impl.DataInitializer;
 import io.github.bonigarcia.wdm.WebDriverManager;
 
 import java.util.List;
+
+// native DELETE used to clear the inventory_foods join table, which foodRepository.deleteAll() doesn't touch
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @AutoConfigureMockMvc
@@ -40,11 +48,25 @@ public class RecommendationsPageTest {
     private FoodRepository foodRepository;
 
     @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private MealLogRepository mealLogRepository;
+
+    @Autowired
     private DataInitializer dataInitializer;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @BeforeEach
     public void setUp() {
         // Set up ChromeDriver
+        // clear anything still referencing foods before deleteAll() below - orders.foods
+        // (via orders_foods) and the seeded Inventory's foods (via inventory_foods) would
+        // otherwise block it with a foreign-key violation
+        orderRepository.deleteAll();
+        entityManager.createNativeQuery("DELETE FROM inventory_foods").executeUpdate();
         foodRepository.deleteAll();
         dataInitializer.onApplicationReady();
         WebDriverManager.chromedriver().setup();
@@ -64,6 +86,10 @@ public class RecommendationsPageTest {
         }
 
         // Clean up test users
+        // orders and meal logs must go first - both hold a foreign key onto user_id, so
+        // deleting a user directly while either still exists violates that constraint
+        orderRepository.deleteAll();
+        mealLogRepository.deleteAll();
         for(User user : userRepository.findAll()) {
             if (!user.getUsername().equals("admin")) {
                 userRepository.delete(user);

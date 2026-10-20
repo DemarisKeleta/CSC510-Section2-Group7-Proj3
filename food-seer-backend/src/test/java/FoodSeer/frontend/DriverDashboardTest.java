@@ -20,6 +20,8 @@ import FoodSeer.entity.User;
 import FoodSeer.entity.Order;
 import FoodSeer.repositories.UserRepository;
 import FoodSeer.repositories.OrderRepository;
+// also cleared in tearDown below before users, since it holds a foreign key onto user_id too
+import FoodSeer.repositories.MealLogRepository;
 import io.github.bonigarcia.wdm.WebDriverManager;
 
 import java.util.List;
@@ -34,6 +36,9 @@ public class DriverDashboardTest {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private MealLogRepository mealLogRepository;
 
     private ChromeDriver driver;
 
@@ -61,6 +66,10 @@ public class DriverDashboardTest {
         }
 
         // Clean up test data
+        // orders and meal logs must go first - both hold a foreign key onto user_id, so
+        // deleting a user directly while either still exists violates that constraint
+        orderRepository.deleteAll();
+        mealLogRepository.deleteAll();
         for(User user : userRepository.findAll()){
             if(!user.getUsername().equals("admin")){
                 userRepository.delete(user);

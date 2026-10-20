@@ -16,6 +16,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 
 import FoodSeer.entity.User;
+// cleared in tearDown below before users, since Order rows hold a foreign key onto user_id
+import FoodSeer.repositories.OrderRepository;
+// also cleared before users below, for the same reason
+import FoodSeer.repositories.MealLogRepository;
 import FoodSeer.repositories.UserRepository;
 import io.github.bonigarcia.wdm.WebDriverManager;
 
@@ -25,6 +29,12 @@ public class RegisterPageTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private MealLogRepository mealLogRepository;
 
     private ChromeDriver driver;
 
@@ -52,6 +62,10 @@ public class RegisterPageTest {
         }
 
         // Workaround since transactional doesn't work. Delete all additions
+        // orders and meal logs must go first - both hold a foreign key onto user_id, so
+        // deleting a user directly while either still exists violates that constraint
+        orderRepository.deleteAll();
+        mealLogRepository.deleteAll();
         for(User user : userRepository.findAll()){
             if( !user.getUsername().equals("admin")){
                 userRepository.delete(user);
