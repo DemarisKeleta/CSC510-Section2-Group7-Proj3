@@ -1,7 +1,7 @@
 # 🍽️ Food Seer - Smart Meal Recommendation System 🍽️
 
-[![Build & Test](https://github.com/grenzerc/CSC510-Section2-Group7-Proj3/actions/workflows/run-tests.yml/badge.svg?branch=Development-2)](https://github.com/grenzerc/CSC510-Section2-Group7-Proj3/actions/workflows/run-tests.yml?query=branch%3ADevelopment-2)
-[![M0 Eval](https://github.com/grenzerc/CSC510-Section2-Group7-Proj3/actions/workflows/m0-eval.yml/badge.svg?branch=Development-2)](https://github.com/grenzerc/CSC510-Section2-Group7-Proj3/actions/workflows/m0-eval.yml?query=branch%3ADevelopment-2)
+[![Build & Test](https://github.com/DemarisKeleta/CSC510-Section2-Group7-Proj3/actions/workflows/run-tests.yml/badge.svg?branch=Development-2)](https://github.com/DemarisKeleta/CSC510-Section2-Group7-Proj3/actions/workflows/run-tests.yml?query=branch%3ADevelopment-2)
+[![M0 Eval](https://github.com/DemarisKeleta/CSC510-Section2-Group7-Proj3/actions/workflows/m0-eval.yml/badge.svg?branch=Development-2)](https://github.com/DemarisKeleta/CSC510-Section2-Group7-Proj3/actions/workflows/m0-eval.yml?query=branch%3ADevelopment-2)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE.md)
 
 ---
