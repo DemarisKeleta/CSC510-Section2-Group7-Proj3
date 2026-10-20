@@ -24,4 +24,15 @@ public interface FitnessDataService {
      */
     // single method: given a username, return today's fitness data if available
     Optional<FitnessData> getTodaysFitnessData(String username);
+
+    /**
+     * Writes a plausible mock fitness-data file for the given username, if
+     * one doesn't already exist. Called on customer registration so every
+     * new customer has fitness data from day one, instead of needing the
+     * generate_fitness_data.py script run by hand per account.
+     *
+     * @param username the user to generate fitness data for
+     */
+    // mirrors scripts/generate_fitness_data.py's formula, so both paths produce the same shape of data
+    void generateFitnessDataIfMissing(String username);
 }
