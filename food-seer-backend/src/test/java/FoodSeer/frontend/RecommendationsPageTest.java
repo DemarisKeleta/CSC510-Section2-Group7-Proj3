@@ -150,8 +150,11 @@ public class RecommendationsPageTest {
      */
     @Test
     public void testDietaryRestrictionFiltering() {
+        // allergen checkboxes now render the shared, backend-seeded allergen names
+        // (uppercase, "DAIRY"/"MILK" as separate entries) rather than the old
+        // hardcoded "Milk/Dairy" combined label
         registerUserWithPreferences("allergyuser", "testpass123", "allergy@test.com",
-            "Moderate ($0-$20)", "Milk/Dairy", "Fish");
+            "Moderate ($0-$20)", "DAIRY", "FISH");
 
         // Verify foods with allergens are excluded
         wait.until(driver -> {
@@ -236,8 +239,9 @@ public class RecommendationsPageTest {
      */
     @Test
     public void testUserInfoDisplay() {
+        // same rename as above: "PEANUTS"/"TREE-NUTS" match the real seeded allergen names
         registerUserWithPreferences("infouser", "testpass123", "info@test.com",
-            "Premium ($0-$35)", "Peanuts", "Tree Nuts");
+            "Premium ($0-$35)", "PEANUTS", "TREE-NUTS");
 
         // Verify user info display
         wait.until(ExpectedConditions.presenceOfElementLocated(By.className("user-info-card")));
@@ -259,8 +263,9 @@ public class RecommendationsPageTest {
      */
     @Test
     public void testMultipleDietaryRestrictions() {
+        // same rename as testDietaryRestrictionFiltering above
         registerUserWithPreferences("multiuser", "testpass123", "multi@test.com",
-            "No Limit", "Milk/Dairy", "Eggs", "Shellfish");
+            "No Limit", "DAIRY", "EGGS", "SHELLFISH");
 
         // Verify recommendations respect multiple allergen restrictions
         wait.until(driver -> {
