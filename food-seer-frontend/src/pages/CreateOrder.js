@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getAllFoods, createOrder, getCurrentUser } from '../services/api';
+import PantryPairing from '../components/PantryPairing';
 
 const CreateOrder = () => {
   const [foods, setFoods] = useState([]);
+  const [restrictedAllergens, setRestrictedAllergens] = useState([]);
   const [cart, setCart] = useState({});
   const [orderName, setOrderName] = useState('');
   const [loading, setLoading] = useState(true);
@@ -16,8 +18,16 @@ const CreateOrder = () => {
   useEffect(() => {
     const fetchFoods = async () => {
       try {
-        await getCurrentUser();
-        const foodsData = await getAllFoods();
+        const user = await getCurrentUser();
+
+	const restrictions = (user.dietaryRestrictions || '')
+		.split(',')
+		.map(item => item.trim().toUpperCase())
+		.filter(Boolean);
+
+	setRestrictedAllergens(restrictions);
+
+	const foodsData = await getAllFoods();
         setFoods(foodsData.filter(food => food.amount > 0));
       } catch (error) {
         console.error('Error fetching foods:', error);
@@ -289,6 +299,10 @@ const CreateOrder = () => {
           )}
         </div>
       </div>
+      <PantryPairing
+	cart={cart}
+	restrictedAllergens={restrictedAllergens}
+/>
     </div>
   );
 };
