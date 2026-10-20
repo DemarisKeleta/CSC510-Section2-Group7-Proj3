@@ -97,13 +97,13 @@ public class PreferencesPageTest {
 
         // Select dietary restrictions using new allergen system
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//label[contains(@class, 'allergen-option')]")));
-        driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='Gluten']]")).click();
-        driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='Milk/Dairy']]")).click();
+        driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='GLUTEN']]")).click();
+        driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='DAIRY']]")).click();
 
         // Verify selections are shown in summary
         WebElement summary = driver.findElement(By.className("selected-restrictions-summary"));
         assertTrue(summary.getText().contains("GLUTEN"));
-        assertTrue(summary.getText().contains("MILK"));
+        assertTrue(summary.getText().contains("DAIRY"));
 
         // Finish and save preferences
         WebElement finishButton = driver.findElement(By.className("next-button"));
@@ -118,7 +118,7 @@ public class PreferencesPageTest {
         User updatedUser = userRepository.findByUsername("preftest").orElseThrow();
         assertEquals("budget", updatedUser.getCostPreference());
         assertTrue(updatedUser.getDietaryRestrictions().contains("GLUTEN"));
-        assertTrue(updatedUser.getDietaryRestrictions().contains("MILK"));
+        assertTrue(updatedUser.getDietaryRestrictions().contains("DAIRY"));
     }
 
     /**
@@ -139,8 +139,8 @@ public class PreferencesPageTest {
 
         // Select allergen restrictions
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//label[contains(@class, 'allergen-option')]")));
-        driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='Fish']]")).click();
-        driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='Shellfish']]")).click();
+        driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='FISH']]")).click();
+        driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='SHELLFISH']]")).click();
         driver.findElement(By.className("next-button")).click();
 
         // Wait here
@@ -161,8 +161,8 @@ public class PreferencesPageTest {
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//label[contains(@class, 'allergen-option') and contains(@class, 'selected')]")));
 
         // Check that the allergens are selected
-        WebElement fishOption = driver.findElement(By.xpath("//label[contains(@class, 'allergen-option') and contains(@class, 'selected')][.//span[text()='Fish']]"));
-        WebElement shellfishOption = driver.findElement(By.xpath("//label[contains(@class, 'allergen-option') and contains(@class, 'selected')][.//span[text()='Shellfish']]"));
+        WebElement fishOption = driver.findElement(By.xpath("//label[contains(@class, 'allergen-option') and contains(@class, 'selected')][.//span[text()='FISH']]"));
+        WebElement shellfishOption = driver.findElement(By.xpath("//label[contains(@class, 'allergen-option') and contains(@class, 'selected')][.//span[text()='SHELLFISH']]"));
         assertTrue(fishOption != null);
         assertTrue(shellfishOption != null);
 
@@ -195,7 +195,7 @@ public class PreferencesPageTest {
         nextButton.click();
 
         // At dietary restrictions step
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='Fish']]")));
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='FISH']]")));
 
         // Go back to budget step
         WebElement prevButton = driver.findElement(By.className("previous-button"));
@@ -226,15 +226,15 @@ public class PreferencesPageTest {
 
         // Test meat group
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//label[contains(@class, 'allergen-option')]")));
-        driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='Meat (All)']]")).click();
+        driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='MEAT']]")).click();
 
         // Verify selection is reflected in summary
         WebElement summary = driver.findElement(By.className("selected-restrictions-summary"));
         assertTrue(summary.getText().contains("MEAT"));
 
         // Add dairy allergy
-        driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='Milk/Dairy']]")).click();
-        assertTrue(summary.getText().contains("MILK"));
+        driver.findElement(By.xpath("//label[contains(@class, 'allergen-option')][.//span[text()='DAIRY']]")).click();
+        assertTrue(summary.getText().contains("DAIRY"));
 
         // Complete preferences
         driver.findElement(By.className("next-button")).click();
@@ -247,8 +247,8 @@ public class PreferencesPageTest {
 
         // Verify all selections are still present
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//label[contains(@class, 'allergen-option')]")));
-        WebElement meatOption = driver.findElement(By.xpath("//label[contains(@class, 'allergen-option') and contains(@class, 'selected')][.//span[text()='Meat (All)']]"));
-        WebElement dairyOption = driver.findElement(By.xpath("//label[contains(@class, 'allergen-option') and contains(@class, 'selected')][.//span[text()='Milk/Dairy']]"));
+        WebElement meatOption = driver.findElement(By.xpath("//label[contains(@class, 'allergen-option') and contains(@class, 'selected')][.//span[text()='MEAT']]"));
+        WebElement dairyOption = driver.findElement(By.xpath("//label[contains(@class, 'allergen-option') and contains(@class, 'selected')][.//span[text()='DAIRY']]"));
         assertTrue(meatOption != null);
         assertTrue(dairyOption != null);
     }

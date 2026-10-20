@@ -23,15 +23,14 @@ import FoodSeer.repositories.FoodRepository;
 import FoodSeer.repositories.OrderRepository;
 // also cleared before users below, since it holds a foreign key onto user_id too
 import FoodSeer.repositories.MealLogRepository;
+// the seeded Inventory's foods list is cleared below before foodRepository.deleteAll()
+import FoodSeer.entity.Inventory;
+import FoodSeer.repositories.InventoryRepository;
 import FoodSeer.repositories.UserRepository;
 import FoodSeer.service.impl.DataInitializer;
 import io.github.bonigarcia.wdm.WebDriverManager;
 
 import java.util.List;
-
-// native DELETE used to clear the inventory_foods join table, which foodRepository.deleteAll() doesn't touch
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @AutoConfigureMockMvc
@@ -54,19 +53,26 @@ public class RecommendationsPageTest {
     private MealLogRepository mealLogRepository;
 
     @Autowired
-    private DataInitializer dataInitializer;
+    private InventoryRepository inventoryRepository;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @Autowired
+    private DataInitializer dataInitializer;
 
     @BeforeEach
     public void setUp() {
         // Set up ChromeDriver
         // clear anything still referencing foods before deleteAll() below - orders.foods
         // (via orders_foods) and the seeded Inventory's foods (via inventory_foods) would
-        // otherwise block it with a foreign-key violation
+        // otherwise block it with a foreign-key violation. Each repository call below
+        // commits its own transaction (standard Spring Data JPA behavior), which is
+        // required here since this test drives the real app over HTTP from a separate
+        // thread/transaction, unlike the EntityManager native-query approach used in
+        // other @Transactional test classes.
         orderRepository.deleteAll();
-        entityManager.createNativeQuery("DELETE FROM inventory_foods").executeUpdate();
+        for (final Inventory inventory : inventoryRepository.findAll()) {
+            inventory.setFoods(new java.util.ArrayList<>());
+            inventoryRepository.save(inventory);
+        }
         foodRepository.deleteAll();
         dataInitializer.onApplicationReady();
         WebDriverManager.chromedriver().setup();
