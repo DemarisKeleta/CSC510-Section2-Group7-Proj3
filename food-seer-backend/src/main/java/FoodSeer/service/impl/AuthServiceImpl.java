@@ -22,6 +22,8 @@ import FoodSeer.entity.User;
 import FoodSeer.repositories.UserRepository;
 import FoodSeer.security.JwtTokenProvider;
 import FoodSeer.service.AuthService;
+// generates a starter fitness-data file for new customers below
+import FoodSeer.service.FitnessDataService;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -35,6 +37,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private DriverStatsRepository driverStatsRepository;
+
+    // generates a starter fitness-data file for new customers below
+    @Autowired
+    private FitnessDataService fitnessDataService;
 
     private PasswordEncoder       passwordEncoder;
     private AuthenticationManager authManager;
@@ -79,6 +85,11 @@ public class AuthServiceImpl implements AuthService {
             DriverStats driverStats = new DriverStats();
             driverStats.setUsername(req.username());
             driverStatsRepository.save(driverStats);
+        }
+        if(role.equals("ROLE_CUSTOMER")){
+            // so every new customer has fitness data from day one, instead of needing
+            // scripts/generate_fitness_data.py run by hand per account
+            fitnessDataService.generateFitnessDataIfMissing(req.username());
         }
         logger.info("User registered successfully: " + req.username());
         return ResponseEntity.ok( Map.of( "message", "Registered" ) );

@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +66,14 @@ class UserControllerTest {
         // Reload persisted users with their database-generated IDs
         testUser = userService.getByUsername("testuser");
         adminUser = userService.getByUsername("admin");
+    }
+
+    @AfterEach
+    void tearDown() {
+        // registering "testuser" above writes a real fitness-data/testuser.json file (file
+        // writes aren't covered by @Transactional's DB rollback) - delete it so repeated test
+        // runs don't leave untracked files behind in the real fitness-data directory
+        new java.io.File("fitness-data", "testuser.json").delete();
     }
 
     @Test
@@ -184,18 +193,20 @@ class UserControllerTest {
     }
 
     /**
-     * A freshly registered user has no fitness file and no saved goal, so
-     * GET /me/calorieBudget should report both as absent rather than
-     * fabricating a number.
+     * A freshly registered customer has no saved goal yet, but - since
+     * AuthServiceImpl.register now auto-generates a starter fitness-data
+     * file for every new customer - does already have fitness data
+     * tracked. remainingCalories still can't be computed without a goal,
+     * so it must stay absent rather than fabricating a number.
      */
     @Test
     @WithMockUser(username = "testuser")
-    void shouldReturnCalorieBudget_defaultsToNotTrackedAndNoGoal() throws Exception {
-        // testuser has no fitness-data file and no saved goal, so the budget should report both as absent
+    void shouldReturnCalorieBudget_hasFitnessDataButNoGoalYet() throws Exception {
+        // registration auto-generates testuser's fitness-data file, but never sets a goal
         mockMvc.perform(get("/api/users/me/calorieBudget")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.fitnessDataTracked").value(false))
+                .andExpect(jsonPath("$.fitnessDataTracked").value(true))
                 .andExpect(jsonPath("$.goalSet").value(false))
                 .andExpect(jsonPath("$.remainingCalories").doesNotExist())
                 .andExpect(jsonPath("$.caloriesConsumedToday").value(0));
