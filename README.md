@@ -4,6 +4,8 @@
 [![M0 Eval](https://github.com/DemarisKeleta/CSC510-Section2-Group7-Proj3/actions/workflows/m0-eval.yml/badge.svg?branch=Development-2)](https://github.com/DemarisKeleta/CSC510-Section2-Group7-Proj3/actions/workflows/m0-eval.yml?query=branch%3ADevelopment-2)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE.md)
 
+[🎬 Food-Seer- Teaser video](https://vimeo.com/1237864579?share=copy&fl=sv&fe=ci)
+
 ---
 
 ## 🆕 Project 2 (Fall 2026): what we added
