@@ -8,7 +8,7 @@ This guide will help you set up and run the FoodSeer application.
 - [Dependencies](#dependencies)
 - [Backend Setup](#backend-setup)
   - [1. Configure MySQL Database](#1-configure-mysql-database)
-  - [2. Create and update applicationproperties file](#2-create-and-update-applicationproperties-file)
+  - [2. Review application.properties](#2-review-applicationproperties)
   - [3. How to Set Up Ollama](#3-how-to-set-up-ollama)
   - [4. Build and Run Backend](#4-build-and-run-backend)
   - [5. Verify Backend](#5-verify-backend)
@@ -84,16 +84,14 @@ Default configuration:
 
 If your MySQL setup is different, update `food-seer-backend/src/main/resources/application.properties`
 
-### 2. Create and update application.properties file
+### 2. Review application.properties
 
-At the following path you will find a template file: food-seer-backend/src/main/resources/application.properties.template
+`food-seer-backend/src/main/resources/application.properties` is already committed with working defaults (MySQL `root` user, no password, admin password `admin123`), so most setups can run as-is with no edits.
 
-Use this template and make a copy in the same folder called application.properties
-
-Inside of this newly created application.properties file change the following
-- spring.datasource.password: To whatever you have your MySQL password set to
-- app.jwt-secret: Using https://emn178.github.io/online-tools/sha256.html make a jwt secret
-- app.admin-user-password: To whatever you want the default admin password to be.
+If your MySQL setup differs, edit that file directly:
+- `spring.datasource.password`: set to whatever your MySQL password is
+- `app.jwt-secret`: optionally replace with your own SHA256 string (e.g. via https://emn178.github.io/online-tools/sha256.html)
+- `app.admin-user-password`: set to whatever you want the default admin password to be
 
 ### 3. How to Set Up Ollama
 
@@ -172,32 +170,43 @@ curl -X POST http://localhost:8080/auth/login \
 
 1. **Login Page** (`/`)
    - Use demo credentials: `admin` / `admin123`
-   - Or register a new account
-   - Clean, modern login interface
+   - Or register a new account (`/register`) - customers get a starter fitness-data file automatically
 
 2. **Preferences Page** (`/preferences`)
-   - After login, set your preferences
-   - **Step 1**: Select budget (Under $10, Under $20, Under $30, or custom)
-   - **Step 2**: Select dietary restrictions (Vegan, Vegetarian, Lactose intolerant, or custom)
-   - Click "Next" between steps
-   - Preferences saved to backend on completion
+   - After login, set your cost preference and dietary restrictions
+   - Click "Next" between steps; saved to backend on completion
 
 3. **Recommendations Page** (`/recommendations`)
-   - View personalized recommendations
-   - See saved budget and dietary restrictions
-   - Update preferences anytime
-   - Logout when done
+   - View personalized recommendations based on saved preferences
 
-4. **AI Assistant** (`/chatbot`) - **Customer Only**
-   - Click "🤖 AI Assistant" in navigation
-   - Answer 3 questions:
-     - **Q1:** How are you feeling today? (e.g., "tired")
-     - **Q2:** How hungry are you? (e.g., "very hungry")
-     - **Q3:** What food are you in the mood for? (e.g., "comfort food")
-   - AI analyzes responses with your preferences
-   - Get ONE personalized food recommendation
-   - Click "Order This Now!" to create order immediately
-   - Click "Get Another Suggestion" to restart
+4. **Personal Diet** (`/personal-diet`) - **Customer Only**
+   - Set a daily calorie goal; see today's burned/consumed/remaining budget
+   - Browse a menu filtered to what fits your remaining budget and is free of your saved allergies
+   - Add items to a cart and place an order
+   - View per-day consumption history at `/calorie-history`
+
+5. **AI Assistant** (`/chatbot`) - **Customer Only**
+   - Click "AI Assistant" in navigation and answer 3 questions about how you're feeling, how hungry you are, and what you're in the mood for
+   - Get one personalized food recommendation; order it directly or ask for another suggestion
+
+6. **Quiz** (`/quiz`) - **Customer Only** - a short guided quiz alternative to the chatbot
+
+7. **Create Order / My Orders** (`/create-order`, `/orders`)
+   - Browse the full menu and place an order directly
+   - View your own order history, rate fulfilled items, and report an allergic reaction on an order
+
+8. **Browse Foods** (`/inventory`) - view the full menu/inventory
+
+9. **Staff & Admin pages**
+   - **Order Management** (`/order-management`) - fulfill orders
+   - **Inventory Management** (`/inventory-management`) - add/edit/delete menu items
+   - **Allergy Incidents** (`/allergy-incidents`) - report an incident and trace which customers were affected
+   - **Safety Notices** (`/notices`) - customers see any safety notices here
+   - **User Management** (`/users`, admin only) - manage user roles
+   - **Dashboards** (`/inventory-dashboard`, `/order-dashboard`, admin only)
+
+10. **Driver Dashboard** (`/driver-dashboard`) - **Driver Only**
+    - Claim available orders, track active deliveries, and acknowledge allergy warnings before pickup/delivery
 
 ---
 
@@ -208,8 +217,60 @@ curl -X POST http://localhost:8080/auth/login \
 - `POST /auth/register` - Register a new user
 
 ### User Management
-- `GET /api/users/me` - Get current user info (requires authentication)
-- `PUT /api/users/me/preferences` - Update user preferences (requires authentication)
+- `GET /api/users` - List all users (admin only)
+- `GET /api/users/{id}` - Get a user by id (admin only)
+- `PUT /api/users/{id}/role` - Update a user's role (admin only)
+- `DELETE /api/users/{id}` - Delete a user (admin only)
+- `GET /api/users/me` - Get current user info
+- `PUT /api/users/me/preferences` - Update cost preference, dietary restrictions, and daily calorie goal
+- `GET /api/users/me/calorieBudget` - Today's burned/goal/consumed/remaining calorie budget
+- `POST /api/users/me/mealLog` - Log (or update) calories for one meal slot today
+- `GET /api/users/me/calorieHistory` - Calories consumed per day, most recent first
+
+### Foods / Menu
+- `GET /api/foods` - List all foods
+- `GET /api/foods/{id}` - Get a food by id
+- `GET /api/foods/withinCalorieBudget` - Menu items that fit the current user's remaining calorie budget
+- `POST /api/foods` - Create a food (staff/admin)
+- `POST /api/foods/updateFood` - Update a food (staff/admin)
+- `DELETE /api/foods/{id}` - Delete a food (staff/admin)
+- `POST /api/foods/orders/{orderId}/{foodId}/rate` - Rate a food from a fulfilled order
+
+### Inventory
+- `GET /api/inventory` - Get current inventory
+- `POST /api/inventory` - Update inventory
+
+### Orders
+- `GET /api/orders` - List all orders
+- `GET /api/orders/fulfilledOrders` / `GET /api/orders/unfulfilledOrders` - Filtered order lists
+- `POST /api/orders` - Create an order
+- `POST /api/orders/fulfillOrder` - Mark an order fulfilled
+- `GET /api/orders/{id}` - Get an order by id
+- `GET /api/orders/my-orders` (`/fulfilled`, `/unfulfilled`) - Current user's own orders
+- `POST /api/orders/{id}` - Update an order's status (driver/admin)
+- `POST /api/orders/{id}/claim` - A driver claims an available order
+- `GET /api/orders/availableOrders` - Orders available for a driver to claim
+- `GET /api/orders/activeOrders/{username}` - A driver's active (picked-up) orders
+
+### Allergy Handoff
+- `POST /api/orders/{orderId}/allergy-handoff/acknowledge` - Staff/driver acknowledge an order's allergy warning
+- `GET /api/orders/{orderId}/allergy-handoff/status` - Check acknowledgment status
+
+### Allergy Incident Trace-Back
+- `POST /api/incidents` - Staff report dishes/allergen/window
+- `POST /api/incidents/reaction` - Customer reports a reaction on their own order
+- `GET /api/incidents` - List all incidents (staff/admin)
+- `POST /api/incidents/{id}/acknowledge` - Staff acknowledge and attach an offer
+- `GET /api/notifications/my` - Customer's own safety notices
+- `GET /api/notifications/my/unread-count` - Unread notice count
+- `POST /api/notifications/{id}/acknowledge` - Acknowledge a notice
+
+### Allergens
+- `GET /api/allergens` - The shared, site-wide allergen list
+- `POST /api/allergens` - Add a new allergen if it isn't already known
+
+### Driver Stats
+- `GET /api/driverStats` - A driver's stats (earnings, deliveries)
 
 ### Chat/AI
 - `POST /api/chat` - Send message to AI chatbot (requires authentication)
@@ -372,23 +433,6 @@ rm -rf ~/.m2/repository
 mvn clean install
 ```
 
-#### Docker Issues
-
-**Problem:** Docker build fails
-```bash
-# Clear Docker cache and rebuild
-docker-compose down -v
-docker-compose build --no-cache
-docker-compose up
-```
-
-**Problem:** Permission denied errors
-```bash
-# On Linux, add user to docker group
-sudo usermod -aG docker $USER
-# Log out and back in for changes to take effect
-```
-
 #### Spring Boot Application Won't Start
 
 **Problem:** Application fails to start
@@ -470,7 +514,7 @@ Solutions:
 ## Getting Help
 
 For questions or issues:
-1. Check the [GitHub Issues](https://github.com/NovaCorz/CSC510/issues)
+1. Check the [GitHub Issues](https://github.com/DemarisKeleta/CSC510-Section2-Group7-Proj3/issues)
 2. Check the demo video linked in the README
 3. Review contribution guidelines before submitting PRs
 
@@ -480,8 +524,8 @@ For questions or issues:
 
 ```bash
 # 1. Clone repo
-git clone https://github.com/NovaCorz/CSC510.git
-cd CSC510
+git clone https://github.com/DemarisKeleta/CSC510-Section2-Group7-Proj3.git
+cd CSC510-Section2-Group7-Proj3
 
 # 2. Setup MySQL database
 
