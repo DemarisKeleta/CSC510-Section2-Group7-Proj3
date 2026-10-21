@@ -137,6 +137,8 @@ Check out our demo video to see the application in action! Click the link below 
 
 [▶️ Watch the Demo Video](https://github.com/rishi082000/CSC510-Section2-Group7-Proj3/blob/main/doc/DEMO.mkv)
 
+[Gorup 5 Demo Video](https://vimeo.com/1237864579?share=copy&fl=sv&fe=ci)
+
 ---
 
 ## 📊 Project Poster
