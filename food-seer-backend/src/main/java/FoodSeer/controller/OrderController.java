@@ -172,6 +172,21 @@ public class OrderController {
         }
     }
 
+    @PreAuthorize("hasRole('DRIVER')")
+    @PostMapping("/{id}/claim")
+    public ResponseEntity<?> claimOrder(@PathVariable("id") final Long id) {
+        try {
+            final OrderDto claimedOrder = orderService.claimOrder(id);
+            return ResponseEntity.ok(claimedOrder);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Order not found");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(e.getMessage());
+        }
+    }
+
     @PreAuthorize("hasAnyRole('ADMIN', 'DRIVER')")
     @GetMapping("/availableOrders")
     public ResponseEntity<?> getAvailableOrders(){

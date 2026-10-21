@@ -164,6 +164,45 @@ public class DataInitializer {
             sampleFoods.add(new Food("COOKIES", 30, 5, Arrays.asList("GLUTEN", "WHEAT", "MILK", "DAIRY", "EGGS", "SOY", "TREE-NUTS", "PEANUTS")));
             sampleFoods.add(new Food("FRUIT SALAD", 20, 8, new ArrayList<>())); // Fully vegan/allergy-friendly
             
+            // Calorie values for the Fitness-Based Calorie Tracking use case - without these,
+            // every food is excluded from the calorie-budget recommendation (a food with no
+            // recorded calorie value can't be judged, so it's never guessed at as zero).
+            final java.util.Map<String, Integer> calorieByName = new java.util.HashMap<>();
+            calorieByName.put("COFFEE", 5);
+            calorieByName.put("TEA", 2);
+            calorieByName.put("BAGEL", 250);
+            calorieByName.put("BANANA", 105);
+            calorieByName.put("APPLE", 95);
+            calorieByName.put("ORANGE JUICE", 110);
+            calorieByName.put("YOGURT", 150);
+            calorieByName.put("GRANOLA BAR", 190);
+            calorieByName.put("TURKEY SANDWICH", 450);
+            calorieByName.put("GARDEN SALAD", 120);
+            calorieByName.put("CAESAR SALAD", 470);
+            calorieByName.put("PASTA", 600);
+            calorieByName.put("PIZZA SLICE", 285);
+            calorieByName.put("BURRITO", 650);
+            calorieByName.put("VEGETABLE SOUP", 110);
+            calorieByName.put("CHICKEN NOODLE SOUP", 180);
+            calorieByName.put("SUSHI ROLL", 255);
+            calorieByName.put("CHICKEN WRAP", 450);
+            calorieByName.put("STEAK", 679);
+            calorieByName.put("SALMON", 412);
+            calorieByName.put("LOBSTER", 320);
+            calorieByName.put("SUSHI PLATTER", 500);
+            calorieByName.put("RIBEYE", 720);
+            calorieByName.put("VEGGIE BURGER", 390);
+            calorieByName.put("TOFU BOWL", 380);
+            calorieByName.put("QUINOA SALAD", 350);
+            calorieByName.put("HUMMUS WRAP", 420);
+            calorieByName.put("CHOCOLATE CAKE", 450);
+            calorieByName.put("ICE CREAM", 270);
+            calorieByName.put("COOKIES", 160);
+            calorieByName.put("FRUIT SALAD", 130);
+            for (final Food food : sampleFoods) {
+                food.setCalories(calorieByName.get(food.getFoodName()));
+            }
+
             // Save all sample foods
             foodRepository.saveAll(sampleFoods);
             System.out.println("Successfully created " + sampleFoods.size() + " sample food items with comprehensive allergen information!");

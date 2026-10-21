@@ -1,19 +1,22 @@
 # 🍽️ Food Seer - Smart Meal Recommendation System 🍽️
 
-[![DOI](https://zenodo.org/badge/1101425615.svg)](https://doi.org/10.5281/zenodo.17845460)
-[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
-[![GitHub Release](https://img.shields.io/github/release/rishi082000/CSC510-Section2-Group7-Proj3.svg)](https://github.com/rishi082000/CSC510-Section2-Group7-Proj3/releases)
-[![codecov](https://codecov.io/gh/rishi082000/CSC510-Section2-Group7-Proj3/branch/main/graph/badge.svg)](https://app.codecov.io/github/rishi082000/CSC510-Section2-Group7-Proj3)
-[![Build main](https://github.com/rishi082000/CSC510-Section2-Group7-Proj3/actions/workflows/run-tests.yml/badge.svg)](https://github.com/rishi082000/CSC510-Section2-Group7-Proj3/actions/workflows/run-tests.yml)
-[![Open Issues](https://img.shields.io/github/issues/rishi082000/CSC510-Section2-Group7-Proj3)](https://github.com/rishi082000/CSC510-Section2-Group7-Proj3/issues)
-[![Closed Issues](https://img.shields.io/github/issues-closed/rishi082000/CSC510-Section2-Group7-Proj3?color=green)](https://github.com/rishi082000/CSC510-Section2-Group7-Proj3/issues?q=is%3Aissue%20state%3Aclosed)
-[![Pull Requests](https://img.shields.io/github/issues-pr/rishi082000/CSC510-Section2-Group7-Proj3)](https://github.com/rishi082000/CSC510-Section2-Group7-Proj3/pulls)
-![GitHub last commit (branch)](https://img.shields.io/github/last-commit/rishi082000/CSC510-Section2-Group7-Proj3/main) 
-![GitHub code size in bytes](https://img.shields.io/github/repo-size/rishi082000/CSC510-Section2-Group7-Proj3)
-[![Code style: google java](https://img.shields.io/badge/code_style-google_java-blue)](https://google.github.io/styleguide/javaguide.html)
-[![linting: checkstyle](https://img.shields.io/badge/linting-checkstyle-purple)](https://checkstyle.sourceforge.io/)
+[![Build & Test](https://github.com/DemarisKeleta/CSC510-Section2-Group7-Proj3/actions/workflows/run-tests.yml/badge.svg?branch=Development-2)](https://github.com/DemarisKeleta/CSC510-Section2-Group7-Proj3/actions/workflows/run-tests.yml?query=branch%3ADevelopment-2)
+[![M0 Eval](https://github.com/DemarisKeleta/CSC510-Section2-Group7-Proj3/actions/workflows/m0-eval.yml/badge.svg?branch=Development-2)](https://github.com/DemarisKeleta/CSC510-Section2-Group7-Proj3/actions/workflows/m0-eval.yml?query=branch%3ADevelopment-2)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE.md)
 
 ---
+
+## 🆕 Project 2 (Fall 2026): what we added
+
+Food Seer was built by a CSC510 team in Fall 2025 ([original repo](https://github.com/rishi082000/CSC510-Section2-Group7-Proj3)). In Fall 2026, Group 5 extended it with these milestones:
+
+| Milestone | What it does | Docs |
+| :- | :- | :- |
+| **M0: risk-killer eval** | Measures whether allergy trace-back warns the right customers (recall) without warning everyone else (precision), on 500 simulated incidents. Runs in CI as **M0 Eval**. The claim currently fails (recall 0.890, precision 0.287), which triggered a spiral review. | [M0 section](docs/allergy-trace-back.md#m0-the-risk-killer-eval) |
+| **Allergy incident trace-back** | When a restaurant or a customer reports an allergic reaction, Food Seer finds other customers who ate the same dishes in that time window and have a matching allergy, and sends each a private safety notice. Staff acknowledge the incident and attach an offer. | [docs/allergy-trace-back.md](docs/allergy-trace-back.md) |
+| **Fitness-based calorie tracking** | Turns a customer's fitness data into a daily calorie budget, tracks calories from today's orders and logged meals, and recommends foods that fit what is left (Personal Diet page). | |
+
+The **M0 Eval** badge above is red on purpose: it fails whenever the claim fails, so the number is honest and reproducible (`cd food-seer-backend && mvn -Dtest=M0TraceEval test`).
 
 ## 🎉 Welcome to Food Seer!
 

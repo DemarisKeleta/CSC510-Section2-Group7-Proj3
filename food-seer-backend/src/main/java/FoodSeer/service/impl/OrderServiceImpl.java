@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import FoodSeer.dto.DriverStatsDto;
 import FoodSeer.entity.DriverStats;
 import FoodSeer.mapper.DriverStatsMapper;
+import FoodSeer.service.AllergyHandoffService;
 import FoodSeer.service.DriverStatsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,10 @@ public class OrderServiceImpl implements OrderService {
     /** Repository for food items. */
     @Autowired
     private FoodRepository foodRepository;
+
+    /** Repository for allergy handoff */
+    @Autowired
+    private AllergyHandoffService allergyHandoffService;
 
     /** Repository for orders. */
     @Autowired
@@ -87,6 +92,7 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("No authenticated user found");
         }
         order.setUser(currentUser);
+        order.setAllergyRestrictions(currentUser.getDietaryRestrictions());
         
         final Order savedOrder = orderRepository.save(order);
         return OrderMapper.mapToOrderDto(savedOrder);
@@ -262,18 +268,31 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderDto updateOrder(final Long orderId, String username, String status){
-        Optional<Order> orderList = orderRepository.findById(orderId);
+    public OrderDto claimOrder(final Long orderId) {
+        final User currentUser = userService.getCurrentUser();
 
-        if(orderList.isEmpty()){
-            logger.info("Order with id {} does not exist", orderId);
-            return null;
+        if (currentUser == null
+                || !"ROLE_DRIVER".equals(currentUser.getRole())) {
+            throw new SecurityException("Only drivers can claim orders");
         }
 
         Order order = orderList.get();
 
-        if(status.equals("Picked Up")){
-            order.setDriver(DriverStatsMapper.mapToDriverStats(driverStatsService.getDriverStats(username)));
+        return OrderMapper.mapToOrderDto(orderRepository.save(order));
+    }
+
+    @Override
+    public OrderDto updateOrder(final Long orderId, String username, String status) {
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() ->
+                    new ResourceNotFoundException(
+                            "Order not found: " + orderId));
+
+        User currentUser = userService.getCurrentUser();
+
+        if (currentUser == null
+                || !"ROLE_DRIVER".equals(currentUser.getRole())) {
+            throw new SecurityException("Only drivers can update delivery status");
         }
 
         if (status.equals("Delivered")) {
@@ -307,8 +326,15 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderDto> getActiveOrders(String username){
-        List<Order> activeOrders = orderRepository.findByDriverUsernameAndStatus(username, "Picked Up");
-        return activeOrders.stream().map(OrderMapper::mapToOrderDto).collect(Collectors.toList());
+    public List<OrderDto> getActiveOrders(String username) {
+        List<Order> activeOrders =
+            orderRepository.findByDriverUsernameAndStatusIn(
+                username,
+                List.of("Claimed", "Picked Up")
+            );
+
+        return activeOrders.stream()
+            .map(OrderMapper::mapToOrderDto)
+            .collect(Collectors.toList());
     }
 }

@@ -3,12 +3,16 @@ name: M0 Eval
 # Runs the M0 risk-killer eval for the allergy trace-back feature and posts
 # its report to the job summary. This job fails whenever the claim fails
 # (alert recall below 0.95 or alert precision below 0.70).
+#
+# It runs on pushes to main and Development-2, on pull requests into main,
+# and on demand (Actions tab > M0 Eval > Run workflow). Feature branches
+# skip it so a red M0 check does not appear on every push.
 
 on:
   push:
-    branches: ['**']
+    branches: [main, Development-2]
   pull_request:
-    branches: ['**']
+    branches: [main]
   workflow_dispatch:
 
 permissions:

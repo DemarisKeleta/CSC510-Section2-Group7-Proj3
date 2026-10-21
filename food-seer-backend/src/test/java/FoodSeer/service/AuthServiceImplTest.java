@@ -28,6 +28,7 @@ import FoodSeer.entity.User;
 import FoodSeer.repositories.DriverStatsRepository;
 import FoodSeer.repositories.UserRepository;
 import FoodSeer.security.JwtTokenProvider;
+import FoodSeer.service.FitnessDataService;
 import FoodSeer.service.impl.AuthServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +39,9 @@ public class AuthServiceImplTest {
 
     @Mock
     private DriverStatsRepository driverStatsRepository;
+
+    @Mock
+    private FitnessDataService fitnessDataService;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -53,8 +57,8 @@ public class AuthServiceImplTest {
     @BeforeEach
     void setUp() {
         // Constructor parameter order matches fields in AuthServiceImpl:
-        // userRepository, driverStatsRepository, passwordEncoder, authManager, jwtService
-        authService = new AuthServiceImpl(userRepository, driverStatsRepository, passwordEncoder, authManager, jwtService);
+        // userRepository, driverStatsRepository, fitnessDataService, passwordEncoder, authManager, jwtService
+        authService = new AuthServiceImpl(userRepository, driverStatsRepository, fitnessDataService, passwordEncoder, authManager, jwtService);
     }
 
     @Test
@@ -159,6 +163,32 @@ public class AuthServiceImplTest {
         verify(driverStatsRepository, times(1)).save(statsCaptor.capture());
         DriverStats ds = statsCaptor.getValue();
         assertEquals("driverOne", ds.getUsername());
+
+        // a driver isn't a customer, so no fitness data should be generated for them
+        verify(fitnessDataService, never()).generateFitnessDataIfMissing(anyString());
+    }
+
+    /**
+     * Registering as a customer must generate a starter fitness-data file,
+     * so the new account has calorie-budget recommendations from day one
+     * instead of needing generate_fitness_data.py run by hand.
+     */
+    @Test
+    void register_whenCustomerRole_generatesFitnessData() {
+        RegisterRequestDto req = mock(RegisterRequestDto.class);
+        when(req.username()).thenReturn("newCustomer");
+        when(req.password()).thenReturn("strongPassword");
+        when(req.email()).thenReturn("newcustomer@example.com");
+        when(req.role()).thenReturn("customer");
+        when(userRepository.existsByUsername("newCustomer")).thenReturn(false);
+        when(passwordEncoder.encode("strongPassword")).thenReturn("hashedPwd");
+
+        ResponseEntity<Map<String, String>> resp = authService.register(req);
+
+        assertEquals(200, resp.getStatusCodeValue());
+        verify(fitnessDataService, times(1)).generateFitnessDataIfMissing("newCustomer");
+        // a customer isn't a driver, so no DriverStats row should be created for them
+        verify(driverStatsRepository, never()).save(any(DriverStats.class));
     }
 
     /**

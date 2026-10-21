@@ -65,6 +65,8 @@ public class OrderMapper {
         // entity and this DTO but was never copied across, so it silently came back null
         dto.setRating(order.getRating());
 
+        dto.setAllergyRestrictions(order.getAllergyRestrictions());
+
 //        dto.setDriverStats(DriverStatsMapper.mapToDriverStatsDto(order.getDriver()));
 
         return dto;

@@ -58,8 +58,20 @@ public class Order {
      * orders placed inside an incident's time window. Orders saved before this
      * field existed have no value, so callers must handle null.
      */
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+  
+    @Column(length = 1000)
+    private String allergyRestrictions;
+
+    public String getAllergyRestrictions() {
+      return allergyRestrictions;
+    }
+
+    public void setAllergyRestrictions(String allergyRestrictions) {
+      this.allergyRestrictions = allergyRestrictions;
+    }
 
     public BigDecimal getCost() {
         return cost;

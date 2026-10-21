@@ -134,4 +134,50 @@ class FitnessDataServiceImplTest {
 
         assertTrue(result.isEmpty());
     }
+
+    // --- generateFitnessDataIfMissing ---
+
+    /**
+     * The main path: a user with no existing file gets a freshly generated
+     * one, readable straight back through getTodaysFitnessData, with
+     * plausible (non-negative, in-range) values.
+     */
+    @Test
+    void generateFitnessDataIfMissing_noExistingFile_writesPlausibleData() {
+        fitnessDataService.generateFitnessDataIfMissing("brandNewUser");
+
+        final Optional<FitnessData> result = fitnessDataService.getTodaysFitnessData("brandNewUser");
+
+        assertTrue(result.isPresent());
+        assertEquals("brandNewUser", result.get().username());
+        assertTrue(result.get().caloriesBurned() >= 0);
+        assertTrue(result.get().steps() >= 2000 && result.get().steps() <= 12000);
+        assertTrue(result.get().activeMinutes() >= 10 && result.get().activeMinutes() <= 90);
+    }
+
+    /**
+     * An existing file (hand-crafted or previously generated) must never be
+     * overwritten - generation is only a fallback for users with no data.
+     */
+    @Test
+    void generateFitnessDataIfMissing_existingFile_isNotOverwritten() throws IOException {
+        final String originalJson = "{\"username\":\"dave\",\"date\":\"2020-01-01\",\"caloriesBurned\":999,\"steps\":1,\"activeMinutes\":1}";
+        Files.writeString(tempDir.resolve("dave.json"), originalJson);
+
+        fitnessDataService.generateFitnessDataIfMissing("dave");
+
+        final Optional<FitnessData> result = fitnessDataService.getTodaysFitnessData("dave");
+        assertTrue(result.isPresent());
+        // the original, deliberately-unusual values must survive untouched
+        assertEquals(999, result.get().caloriesBurned());
+        assertEquals(1, result.get().steps());
+    }
+
+    /** A null/blank username can't form a valid file path and must be a no-op, not a crash. */
+    @Test
+    void generateFitnessDataIfMissing_nullOrBlankUsername_doesNotThrow() {
+        fitnessDataService.generateFitnessDataIfMissing(null);
+        fitnessDataService.generateFitnessDataIfMissing("   ");
+        // nothing to assert beyond "no exception" - there's no valid file either call could have written
+    }
 }
