@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getAllFoods, createOrder, getCurrentUser } from '../services/api';
+import PantryPairing from '../components/PantryPairing';
 
 const CreateOrder = () => {
   const [foods, setFoods] = useState([]);
+  const [restrictedAllergens, setRestrictedAllergens] = useState([]);
   const [cart, setCart] = useState({});
   const [orderName, setOrderName] = useState('');
   const [loading, setLoading] = useState(true);
@@ -16,8 +18,16 @@ const CreateOrder = () => {
   useEffect(() => {
     const fetchFoods = async () => {
       try {
-        await getCurrentUser();
-        const foodsData = await getAllFoods();
+        const user = await getCurrentUser();
+
+	const restrictions = (user.dietaryRestrictions || '')
+		.split(',')
+		.map(item => item.trim().toUpperCase())
+		.filter(Boolean);
+
+	setRestrictedAllergens(restrictions);
+
+	const foodsData = await getAllFoods();
         setFoods(foodsData.filter(food => food.amount > 0));
       } catch (error) {
         console.error('Error fetching foods:', error);
@@ -30,12 +40,12 @@ const CreateOrder = () => {
     fetchFoods();
   }, [navigate]);
 
-  // Handle food from chatbot recommendation
+  // Handle a single food item handed off from the chatbot's recommendation.
   useEffect(() => {
     if (location.state?.addToCart && foods.length > 0) {
       const recommendedFood = location.state.addToCart;
       const foodInStock = foods.find(f => f.id === recommendedFood.id);
-      
+
       if (foodInStock) {
         setCart(prev => ({
           ...prev,
@@ -48,6 +58,43 @@ const CreateOrder = () => {
         setTimeout(() => setNotification(null), 5000);
       } else {
         setNotification(`⚠️ Sorry, ${recommendedFood.foodName} is currently out of stock.`);
+        setTimeout(() => setNotification(null), 5000);
+      }
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, foods]);
+
+  // Handle a whole cart handed off from Personal Diet - a customer there can
+  // click "Add to Cart" on several items before coming here, so this applies
+  // all of them at once instead of just the one addToCart handles above.
+  useEffect(() => {
+    if (location.state?.addMultipleToCart && foods.length > 0) {
+      const items = location.state.addMultipleToCart;
+      const addedNames = [];
+      const outOfStockNames = [];
+
+      setCart(prev => {
+        const next = { ...prev };
+        for (const item of items) {
+          const foodInStock = foods.find(f => f.id === item.food.id);
+          if (foodInStock) {
+            next[foodInStock.id] = {
+              food: foodInStock,
+              quantity: (next[foodInStock.id]?.quantity || 0) + item.quantity
+            };
+            addedNames.push(foodInStock.foodName);
+          } else {
+            outOfStockNames.push(item.food.foodName);
+          }
+        }
+        return next;
+      });
+
+      if (addedNames.length > 0) {
+        setNotification(`✅ ${addedNames.join(', ')} added to your cart!`);
+        setTimeout(() => setNotification(null), 5000);
+      } else if (outOfStockNames.length > 0) {
+        setNotification(`⚠️ Sorry, ${outOfStockNames.join(', ')} ${outOfStockNames.length > 1 ? 'are' : 'is'} currently out of stock.`);
         setTimeout(() => setNotification(null), 5000);
       }
       window.history.replaceState({}, document.title);
@@ -252,6 +299,10 @@ const CreateOrder = () => {
           )}
         </div>
       </div>
+      <PantryPairing
+	cart={cart}
+	restrictedAllergens={restrictedAllergens}
+/>
     </div>
   );
 };

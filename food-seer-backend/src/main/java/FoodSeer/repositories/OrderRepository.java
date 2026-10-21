@@ -47,4 +47,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByStatus(String status);
 
     List<Order> findByDriverUsernameAndStatus(@Param("username") String username, @Param("status") String status);
+
+    List<Order> findByDriverUsernameAndStatusIn(String username, List<String> statuses);
 }

@@ -1,14 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMyOrders, getCurrentUser, rateFoodItem } from '../services/api'; // Added rateFoodItem
+import {
+  getMyOrders,
+  getCurrentUser,
+  rateFoodItem,
+  reportCustomerReaction,
+  updateUserPreferences,
+  addAllergen
+} from '../services/api'; // Added rateFoodItem
+import { ALLERGEN_SUGGESTIONS } from '../components/allergyOptions';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, fulfilled, unfulfilled
+  // The customer's own saved allergies (set on Personal Diet / the onboarding
+  // quiz), so the reaction-report suggestions below reflect what they've
+  // actually told FoodSeer they're allergic to, not just generic examples.
+  const [userAllergies, setUserAllergies] = useState([]);
+  // Full user record, kept so handleReportReaction below can pass through
+  // costPreference/dailyCalorieGoal unchanged when saving a new allergy -
+  // updateUserPreferences overwrites those fields if they're omitted.
+  const [currentUser, setCurrentUser] = useState(null);
   
   // New state to track dropdown values: { "foodId-orderId": 5 }
   const [ratings, setRatings] = useState({});
+
+  // Allergy reaction reports: which order's form is open, what was typed, and
+  // the result shown on each order card.
+  const [reactionOrderId, setReactionOrderId] = useState(null);
+  const [reactionAllergen, setReactionAllergen] = useState('');
+  const [reactionSubmitting, setReactionSubmitting] = useState(false);
+  const [reactionResults, setReactionResults] = useState({});
   
   const navigate = useNavigate();
 
@@ -18,7 +41,12 @@ const Orders = () => {
 
   const fetchOrders = async () => {
     try {
-      await getCurrentUser(); // Verify authentication
+      const userData = await getCurrentUser(); // Verify authentication
+      setCurrentUser(userData);
+      const restrictions = userData?.dietaryRestrictions
+        ? userData.dietaryRestrictions.split(',').map((a) => a.trim()).filter((a) => a.length > 0)
+        : [];
+      setUserAllergies(restrictions);
       const ordersData = await getMyOrders(); // Get only current user's orders
       setOrders(ordersData);
     } catch (error) {
@@ -28,6 +56,16 @@ const Orders = () => {
       setLoading(false);
     }
   };
+
+  // The customer's own allergies first (most relevant to what they'd actually
+  // be reporting a reaction to), then the generic examples, deduplicated
+  // case-insensitively so an allergy they already added isn't listed twice.
+  const reactionAllergenSuggestions = [
+    ...userAllergies,
+    ...ALLERGEN_SUGGESTIONS.filter(
+      (suggestion) => !userAllergies.some((a) => a.toLowerCase() === suggestion.toLowerCase())
+    )
+  ];
 
   const handleBack = () => {
     navigate('/recommendations');
@@ -80,6 +118,61 @@ const Orders = () => {
   };
 
   // ---------------------------
+
+  const openReactionForm = (orderId) => {
+    setReactionOrderId(orderId);
+    setReactionAllergen('');
+  };
+
+  const closeReactionForm = () => {
+    setReactionOrderId(null);
+    setReactionAllergen('');
+  };
+
+  const handleReportReaction = async (orderId) => {
+    if (reactionAllergen.trim() === '') {
+      setReactionResults({ ...reactionResults, [orderId]: { ok: false, text: 'Please enter the allergen you reacted to.' } });
+      return;
+    }
+    setReactionSubmitting(true);
+    try {
+      await reportCustomerReaction(orderId, reactionAllergen.trim());
+
+      // A reported reaction means this is a real, known allergy for this
+      // customer now - save it to their profile too, not just the incident
+      // record, so Personal Diet and future order filtering reflect it.
+      const normalizedAllergen = reactionAllergen.trim().toUpperCase();
+      const wasAlreadyKnown = userAllergies.some((a) => a.toUpperCase() === normalizedAllergen);
+      if (!wasAlreadyKnown && currentUser) {
+        const updatedRestrictions = [...userAllergies, normalizedAllergen].join(', ');
+        await updateUserPreferences(currentUser.costPreference, updatedRestrictions, currentUser.dailyCalorieGoal);
+        setUserAllergies((prev) => [...prev, normalizedAllergen]);
+        // Also add it to the shared, site-wide allergen list (same list
+        // Personal Diet, the onboarding quiz, and staff's Add Food form use),
+        // so it's a real selectable option everywhere, not just this profile.
+        try {
+          await addAllergen(normalizedAllergen);
+        } catch (allergenError) {
+          console.error('Error adding allergen to the shared list:', allergenError);
+        }
+      }
+
+      setReactionResults({
+        ...reactionResults,
+        [orderId]: {
+          ok: true,
+          text: 'Thank you. The restaurant has been notified, and other customers who may have been exposed '
+            + 'will get a private notice. If you feel unwell, please seek medical care.'
+            + (wasAlreadyKnown ? '' : ` We've also added "${normalizedAllergen}" to your saved allergies.`),
+        },
+      });
+      closeReactionForm();
+    } catch (error) {
+      setReactionResults({ ...reactionResults, [orderId]: { ok: false, text: error.message } });
+    } finally {
+      setReactionSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -149,6 +242,43 @@ const Orders = () => {
                   <p><strong>Order ID:</strong> #{order.id}</p>
                   <p><strong>Total Items:</strong> {order.foods.length}</p>
                   <p><strong>Total Price:</strong> ${getTotalPrice(order)}</p>
+
+                  {/* Allergy reaction report */}
+                  {reactionOrderId === order.id ? (
+                    <div className="trace-reaction-form">
+                      <input
+                        type="text"
+                        list={`trace-reaction-allergens-${order.id}`}
+                        value={reactionAllergen}
+                        onChange={(event) => setReactionAllergen(event.target.value)}
+                        placeholder="What did you react to? For example: Peanuts"
+                      />
+                      <datalist id={`trace-reaction-allergens-${order.id}`}>
+                        {reactionAllergenSuggestions.map((option) => (
+                          <option key={option} value={option} />
+                        ))}
+                      </datalist>
+                      <button
+                        className="create-button"
+                        disabled={reactionSubmitting}
+                        onClick={() => handleReportReaction(order.id)}
+                      >
+                        {reactionSubmitting ? 'Sending...' : 'Send report'}
+                      </button>
+                      <button className="back-button" onClick={closeReactionForm}>
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button className="trace-report-button" onClick={() => openReactionForm(order.id)}>
+                      ⚠️ Report an allergic reaction
+                    </button>
+                  )}
+                  {reactionResults[order.id] && (
+                    <div className={reactionResults[order.id].ok ? 'trace-success' : 'trace-error'}>
+                      {reactionResults[order.id].text}
+                    </div>
+                  )}
                 </div>
 
                 <div className="order-items">

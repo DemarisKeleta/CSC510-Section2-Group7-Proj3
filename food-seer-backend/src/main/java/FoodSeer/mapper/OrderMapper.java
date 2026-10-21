@@ -35,9 +35,18 @@ public class OrderMapper {
                         foodDto.getPrice(),
                         foodDto.getAllergies()
                     );
-                    // CRITICAL: We must ensure the ID is preserved, 
+                    // CRITICAL: We must ensure the ID is preserved,
                     // otherwise the frontend cannot rate specific items!
-                    f.setId(foodDto.getId()); 
+                    f.setId(foodDto.getId());
+                    // The 4-arg Food constructor above doesn't set these -
+                    // copy them through so order history shows real values
+                    // instead of silently dropping them.
+                    // fixes a pre-existing data-loss bug: rating was silently dropped before
+                    f.setRating(foodDto.getRating());
+                    // same fix, for numberOfRatings
+                    f.setNumberOfRatings(foodDto.getNumberOfRatings());
+                    // same fix, for the new calories field
+                    f.setCalories(foodDto.getCalories());
                     return f;
                 })
                 .collect(Collectors.toList()));
@@ -52,6 +61,8 @@ public class OrderMapper {
         dto.setCost(order.getCost());
         dto.setStatus(order.getStatus());
         dto.setDeliveryCost(order.getDeliveryCost());
+
+        dto.setAllergyRestrictions(order.getAllergyRestrictions());
 
 //        dto.setDriverStats(DriverStatsMapper.mapToDriverStatsDto(order.getDriver()));
 

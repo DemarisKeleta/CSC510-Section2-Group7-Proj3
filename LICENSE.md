@@ -1,6 +1,7 @@
 MIT License
 
 Copyright (c) 2025 Rishabh Ravi Kumar, Rishi Senthil Kumar,Jagadeshwar Muthukumaran, Krisha Sanjaykumar Darji
+Copyright (c) 2026 CSC510 Fall 2026 Group 5 contributors (Project 2 changes)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

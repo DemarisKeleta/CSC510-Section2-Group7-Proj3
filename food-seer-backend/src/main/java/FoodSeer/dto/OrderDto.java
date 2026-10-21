@@ -41,6 +41,16 @@ public class OrderDto {
      * Set of IDs representing foods in this order that have already been rated.
      * Used by frontend to disable rating buttons.
      */
+    private String allergyRestrictions;
+
+    public String getAllergyRestrictions() {
+        return allergyRestrictions;
+    }
+
+    public void setAllergyRestrictions(String allergyRestrictions) {
+        this.allergyRestrictions = allergyRestrictions;
+    }
+    
     private Set<Long> ratedFoodIds;
 
     /**

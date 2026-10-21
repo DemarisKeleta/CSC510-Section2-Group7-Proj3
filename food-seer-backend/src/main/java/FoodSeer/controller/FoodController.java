@@ -16,7 +16,13 @@ import org.springframework.web.bind.annotation.RequestParam; // Added this impor
 import org.springframework.web.bind.annotation.RestController;
 
 import FoodSeer.dto.FoodDto;
+// response shape for the new withinCalorieBudget endpoint below
+import FoodSeer.dto.FoodRecommendationDto;
+// supplies the budget-aware recommendation logic
+import FoodSeer.service.CalorieBudgetService;
 import FoodSeer.service.FoodService;
+// used to resolve the currently authenticated user for the new endpoint below
+import FoodSeer.service.UserService;
 
 /**
  * Controller class for food
@@ -31,6 +37,14 @@ public class FoodController {
      */
     @Autowired
     private FoodService foodService;
+
+    // computes the calorie-aware recommendation for getFoodsWithinCalorieBudget below
+    @Autowired
+    private CalorieBudgetService calorieBudgetService;
+
+    // resolves the authenticated caller for getFoodsWithinCalorieBudget below
+    @Autowired
+    private UserService userService;
 
     /**
      * Gets the food based on the ID parameter
@@ -75,6 +89,27 @@ public class FoodController {
     @GetMapping
     public List<FoodDto> getFoods () {
         return foodService.getAllFoods();
+    }
+
+    /**
+     * Returns menu items that fit within the current customer's remaining
+     * calorie budget for today, per the Fitness-Based Calorie Tracking use
+     * case. Falls back to the full menu (with budgetApplied=false) if the
+     * budget cannot be computed yet.
+     *
+     * @return the calorie-aware recommendation
+     */
+    // new endpoint: GET /api/foods/withinCalorieBudget
+    @GetMapping ( "/withinCalorieBudget" )
+    public ResponseEntity<FoodRecommendationDto> getFoodsWithinCalorieBudget () {
+        // resolve who's calling, via Spring Security's context
+        final var currentUser = userService.getCurrentUser();
+        // no authenticated user means this request can't be fulfilled
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        // delegate the actual filtering logic to CalorieBudgetService
+        return ResponseEntity.ok( calorieBudgetService.getRecommendedFoodsFor( currentUser ) );
     }
 
     /**
@@ -125,7 +160,9 @@ public class FoodController {
             name,
             foodDto.getAmount(),
             foodDto.getPrice(),
-            foodDto.getAllergies()
+            foodDto.getAllergies(),
+            // pass the incoming calories value through to the service layer
+            foodDto.getCalories()
         );
 
         return ResponseEntity.ok(updatedFood);

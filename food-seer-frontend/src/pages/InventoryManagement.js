@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllFoods, createFood, updateFood, deleteFood, getCurrentUser } from '../services/api';
+import { getAllFoods, createFood, updateFood, deleteFood, getCurrentUser, getAllergens } from '../services/api';
 
 const InventoryManagement = () => {
-  // Comprehensive list of allergens
-  const ALLERGEN_OPTIONS = [
-    'MILK', 'DAIRY', 'LACTOSE', 'EGGS', 'FISH', 'SHELLFISH',
-    'TREE-NUTS', 'PEANUTS', 'WHEAT', 'GLUTEN', 'SOY', 'SESAME',
-    'CORN', 'SULFITES', 'MUSTARD', 'MEAT', 'BEEF', 'PORK',
-    'POULTRY', 'GELATIN', 'CAFFEINE'
-  ];
-
   const [foods, setFoods] = useState([]);
+  // Shared, site-wide allergen list (same source Personal Diet and the
+  // onboarding quiz read from) - so staff can tag food with any allergen a
+  // customer has added, not just the original fixed set.
+  const [allergenOptions, setAllergenOptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingFood, setEditingFood] = useState(null);
@@ -19,6 +15,7 @@ const InventoryManagement = () => {
     foodName: '',
     amount: 0,
     price: 0,
+    calories: '',
     allergies: []
   });
   const [currentUser, setCurrentUser] = useState(null);
@@ -50,6 +47,12 @@ const InventoryManagement = () => {
     fetchFoods();
   }, []);
 
+  useEffect(() => {
+    getAllergens()
+      .then(setAllergenOptions)
+      .catch((error) => console.error('Error loading allergen list:', error));
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -63,6 +66,7 @@ const InventoryManagement = () => {
       foodName: '',
       amount: 0,
       price: 0,
+      calories: '',
       allergies: []
     });
     setEditingFood(null);
@@ -91,6 +95,7 @@ const InventoryManagement = () => {
         foodName: formData.foodName.toUpperCase(),
         amount: parseInt(formData.amount),
         price: parseInt(formData.price),
+        calories: formData.calories === '' ? null : parseInt(formData.calories),
         allergies: formData.allergies
       };
 
@@ -110,6 +115,7 @@ const InventoryManagement = () => {
       foodName: food.foodName,
       amount: food.amount,
       price: food.price,
+      calories: food.calories != null ? String(food.calories) : '',
       allergies: food.allergies || []
     });
     setShowAddForm(true);
@@ -128,6 +134,7 @@ const InventoryManagement = () => {
         foodName: formData.foodName.toUpperCase(),
         amount: parseInt(formData.amount),
         price: parseInt(formData.price),
+        calories: formData.calories === '' ? null : parseInt(formData.calories),
         allergies: formData.allergies
       };
 
@@ -258,12 +265,25 @@ const InventoryManagement = () => {
                   placeholder="Price"
                 />
               </div>
+
+              <div className="form-group">
+                <label htmlFor="calories">Calories</label>
+                <input
+                  type="number"
+                  id="calories"
+                  name="calories"
+                  value={formData.calories}
+                  onChange={handleInputChange}
+                  min="0"
+                  placeholder="Optional"
+                />
+              </div>
             </div>
 
             <div className="form-group">
               <label>Allergens (select all that apply)</label>
               <div className="allergens-grid">
-                {ALLERGEN_OPTIONS.map(allergen => (
+                {allergenOptions.map(allergen => (
                   <label key={allergen} className="allergen-checkbox">
                     <input
                       type="checkbox"
@@ -304,6 +324,7 @@ const InventoryManagement = () => {
                 <th>ID</th>
                 <th>Name</th>
                 <th>Price</th>
+                <th>Calories</th>
                 <th>Stock</th>
                 <th>Rating</th>
                 <th>Allergies</th>
@@ -316,6 +337,7 @@ const InventoryManagement = () => {
                   <td>{food.id}</td>
                   <td>{food.foodName}</td>
                   <td>${food.price}</td>
+                  <td>{food.calories != null ? `${food.calories} cal` : '—'}</td>
                   <td>
                     <span className={food.amount > 0 ? 'stock-positive' : 'stock-zero'}>
                       {food.amount}

@@ -21,3 +21,14 @@ proj1/test-output/
 proj1/.venv/
 proj1/tests/.pytest_cache/
 proj1/tests/__pycache__/
+
+# Logs and process ids from local test runs
+*.log
+*.pid
+
+# Local secrets (never commit keys or passwords)
+**/.env
+**/.env.*
+
+# Frontend test coverage output
+**/coverage/

@@ -61,6 +61,13 @@ public class Food {
     private List<String> allergies = new ArrayList<>();
 
     /**
+     * Calorie count for this food item. Nullable: staff may not have
+     * recorded a value yet, which is distinct from a food having 0 calories.
+     */
+    // Integer (not int) so "no value recorded" can be represented as null
+    private Integer calories;
+
+    /**
      * Constructor for Hibernate
      */
     public Food () {
@@ -222,5 +229,23 @@ public class Food {
      */
     public void setNumberOfRatings(final Integer numberOfRatings) {
         this.numberOfRatings = numberOfRatings;
+    }
+
+    /**
+     * Gets the calorie count
+     * @return calories, or null if not recorded
+     */
+    // returns the raw field, null included, so callers can detect "not recorded"
+    public Integer getCalories() {
+        return calories;
+    }
+
+    /**
+     * Sets the calorie count
+     * @param calories
+     */
+    // plain field setter, used by FoodMapper and the service layer
+    public void setCalories(final Integer calories) {
+        this.calories = calories;
     }
 }

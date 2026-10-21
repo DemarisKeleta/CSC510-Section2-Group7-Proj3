@@ -74,7 +74,8 @@ public interface FoodService {
      * as an int
      * @return FoodDto with new amount
      */
-    FoodDto updateFood(final String name, final int amount, final int price, final List<String> allergies);
+    // added a 5th parameter, calories, so the edit form can update it alongside amount/price/allergies
+    FoodDto updateFood(final String name, final int amount, final int price, final List<String> allergies, final Integer calories);
 
     /**
      * Returns true if the food already exists in the database.

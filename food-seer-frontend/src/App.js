@@ -12,10 +12,15 @@ import InventoryManagement from './pages/InventoryManagement';
 import UserManagement from './pages/UserManagement';
 import Chatbot from './pages/Chatbot';
 import Quiz from './pages/Quiz';
+import PersonalDiet from './pages/PersonalDiet';
+// the new per-day calorie-consumption history page, linked from Personal Diet's "History" button
+import CalorieHistory from './pages/CalorieHistory';
 import AdminRoute from './components/AdminRoute';
 import Dashboard from './pages/Dashboard';
 import Navigation from './components/Navigation';
 import DriverDashboard from './pages/DriverDashboard';
+import AllergyIncidents from './pages/AllergyIncidents';
+import SafetyNotices from './pages/SafetyNotices';
 import { isAuthenticated } from './services/api';
 
 // Protected Route component
@@ -73,15 +78,36 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/recommendations" 
+          <Route
+            path="/recommendations"
             element={
               <ProtectedRoute>
                 <AppLayout>
                   <Recommendations />
                 </AppLayout>
               </ProtectedRoute>
-            } 
+            }
+          />
+          <Route
+            path="/personal-diet"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <PersonalDiet />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Calorie history: per-day consumption, linked from Personal Diet's "History" button */}
+          <Route
+            path="/calorie-history"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <CalorieHistory />
+                </AppLayout>
+              </ProtectedRoute>
+            }
           />
           <Route
             path="/inventory-dashboard"
@@ -180,6 +206,28 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+          {/* Allergy trace-back: staff incident page and customer notices */}
+          <Route
+            path="/allergy-incidents"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AllergyIncidents />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notices"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <SafetyNotices />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
 
           {/* Catch all - redirect to login */}
           <Route path="*" element={<Navigate to="/" />} />

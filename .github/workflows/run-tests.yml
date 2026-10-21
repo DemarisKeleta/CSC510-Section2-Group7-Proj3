@@ -50,6 +50,10 @@ jobs:
         working-directory: food-seer-frontend
         run: npm install
 
+      - name: Run frontend unit tests (Jest)
+        working-directory: food-seer-frontend
+        run: CI=true npm test
+
       - name: Build frontend
         working-directory: food-seer-frontend
         run: CI=false npm run build
@@ -105,7 +109,7 @@ jobs:
       - name: Build & Run Tests with Coverage
         run: |
           cd food-seer-backend
-          mvn -B clean test
+          mvn -B -Daether.connector.http.retryHandler.count=5 -Daether.connector.http.retryHandler.serviceUnavailable=429,502,503,504 clean test
 
       - name: Check for JaCoCo report
         working-directory: food-seer-backend
@@ -121,7 +125,7 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./target/site/jacoco/jacoco.xml
+          files: ./food-seer-backend/target/site/jacoco/jacoco.xml
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
