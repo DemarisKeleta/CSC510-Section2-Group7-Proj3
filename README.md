@@ -221,6 +221,13 @@ A heartfelt thank you to our contributors who made this project possible:
 - [Jagadeshwar Muthukumaran](https://github.com/Jagadesh001ops) - jmuthuk  
 - [Krisha Darji](https://github.com/KrishaDarji) - kdarji
 
+
+**Group #5**
+
+- [Demaris Ghide](https://github.com/DemarisKeleta) - gdemarisk
+- [Neelan ](https://github.com/neelansp)   
+- [Tierra Ingram](https://github.com/Tringram1)  
+
 ---
 
 ## 🙏 Acknowledgements
