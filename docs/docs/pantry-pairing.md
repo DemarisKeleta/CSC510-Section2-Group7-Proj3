@@ -50,4 +50,3 @@ The pantry-matching test suite covers:
 
 The test file is `food-seer-frontend/src/data/pantryMatcher.test.js`.
 
-| Mock fitness data | `food-seer-backend/fitness-data/<username>.json`, generated via `food-seer-backend/scripts/generate_fitness_data.py` |
